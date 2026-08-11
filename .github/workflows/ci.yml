@@ -69,6 +69,7 @@ jobs:
       SECRET_KEY: ci-secret-key-not-used-anywhere-real-0123456789
       DATABASE_URL: postgres://opsportal:opsportal@localhost:5432/opsportal
       ALLOWED_HOSTS: localhost,127.0.0.1,testserver
+      MEDIA_STORAGE: local
       EMAIL_BACKEND: django.core.mail.backends.locmem.EmailBackend
       TEST_RUNNER: xmlrunner.extra.djangotestrunner.XMLTestRunner
       TEST_OUTPUT_DIR: test-results

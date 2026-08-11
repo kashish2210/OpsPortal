@@ -198,7 +198,16 @@ class MediaStorageConfigurationTests(TestCase):
 
     def test_every_backend_is_importable(self):
         """Guards against a missing storage dependency in requirements.txt."""
-        from cloudinary_storage.storage import MediaCloudinaryStorage
+        cloudinary_env = {
+            "CLOUDINARY_CLOUD_NAME": "demo",
+            "CLOUDINARY_API_KEY": "demo",
+            "CLOUDINARY_API_SECRET": "demo",
+            "CLOUDINARY_URL": "cloudinary://demo:demo@demo",
+        }
+
+        with mock.patch.dict(os.environ, cloudinary_env, clear=False):
+            from cloudinary_storage.storage import MediaCloudinaryStorage
+
         from django.core.files.storage import FileSystemStorage
         from storages.backends.s3 import S3Storage
 
