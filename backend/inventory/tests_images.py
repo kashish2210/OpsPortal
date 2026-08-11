@@ -1,9 +1,11 @@
 """Tests for product image upload (bonus: S3-backed media)."""
 
 import io
+import os
 import shutil
 import tempfile
 from decimal import Decimal
+from unittest import mock
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -18,6 +20,15 @@ User = get_user_model()
 
 #: Keep uploaded test files out of the real media directory.
 TEMP_MEDIA = tempfile.mkdtemp(prefix="opsportal-test-media-")
+
+#: Force local storage for the upload tests. Without this the suite would use
+#: whatever MEDIA_STORAGE the developer's .env selects - and on a machine
+#: configured for Cloudinary or S3, running the tests would upload to the real
+#: account over the network.
+LOCAL_STORAGES = {
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+}
 
 
 def make_image_upload(name="photo.jpg", size=(64, 64), fmt="JPEG", content_type="image/jpeg"):
@@ -46,7 +57,7 @@ class ProductImagePathTests(TestCase):
         self.assertTrue(product_image_path(Product(sku="X"), "noext").endswith(".jpg"))
 
 
-@override_settings(MEDIA_ROOT=TEMP_MEDIA)
+@override_settings(MEDIA_ROOT=TEMP_MEDIA, STORAGES=LOCAL_STORAGES)
 class ProductImageUploadTests(TestCase):
     @classmethod
     def tearDownClass(cls):
@@ -172,20 +183,54 @@ class ProductImageUploadTests(TestCase):
         self.assertEqual(response.status_code, 401)
 
 
-class S3ConfigurationTests(TestCase):
-    """The storage backend is selected purely by env, with no code changes."""
+class MediaStorageConfigurationTests(TestCase):
+    """The storage backend is selected purely by env, with no code changes.
 
-    def test_local_storage_is_the_default(self):
+    These assert the *wiring*, not which provider happens to be configured on
+    this machine - the suite has to pass identically on a laptop set to
+    Cloudinary and in CI, where nothing is configured at all.
+    """
+
+    def test_media_storage_is_a_recognised_value(self):
         from django.conf import settings
 
-        self.assertFalse(settings.USE_S3)
-        self.assertEqual(
-            settings.STORAGES["default"]["BACKEND"],
-            "django.core.files.storage.FileSystemStorage",
-        )
+        self.assertIn(settings.MEDIA_STORAGE, ("local", "cloudinary", "s3"))
 
-    def test_s3_backend_is_importable(self):
-        """Guards against a missing django-storages/boto3 dependency."""
+    def test_every_backend_is_importable(self):
+        """Guards against a missing storage dependency in requirements.txt."""
+        from cloudinary_storage.storage import MediaCloudinaryStorage
+        from django.core.files.storage import FileSystemStorage
         from storages.backends.s3 import S3Storage
 
-        self.assertTrue(callable(S3Storage))
+        for backend in (FileSystemStorage, S3Storage, MediaCloudinaryStorage):
+            self.assertTrue(callable(backend), backend)
+
+    def test_the_configured_backend_matches_the_selection(self):
+        from django.conf import settings
+
+        expected = {
+            "local": "django.core.files.storage.FileSystemStorage",
+            "cloudinary": "cloudinary_storage.storage.MediaCloudinaryStorage",
+            "s3": "storages.backends.s3.S3Storage",
+        }[settings.MEDIA_STORAGE]
+        self.assertEqual(settings.STORAGES["default"]["BACKEND"], expected)
+
+    def test_use_s3_is_still_honoured_as_a_legacy_alias(self):
+        from django.conf import settings
+
+        # USE_S3=True must keep selecting s3 for anyone on the old variable.
+        if settings.USE_S3:
+            self.assertEqual(settings.MEDIA_STORAGE, "s3")
+
+    def test_an_unknown_value_is_rejected_loudly(self):
+        """A typo in MEDIA_STORAGE should fail at boot, not silently fall back."""
+        import importlib
+
+        from django.core.exceptions import ImproperlyConfigured
+
+        with mock.patch.dict(os.environ, {"MEDIA_STORAGE": "dropbox"}):
+            with self.assertRaises(ImproperlyConfigured):
+                importlib.reload(importlib.import_module("config.settings"))
+
+        # Restore the real module state for the rest of the suite.
+        importlib.reload(importlib.import_module("config.settings"))

@@ -27,6 +27,11 @@ pillow==11.3.0
 # image without apt-installing cairo/pango (which WeasyPrint would need).
 reportlab==4.4.4
 
-# Optional S3 media storage - only used when USE_S3=True.
+# Cloud media storage. Which one is active is chosen by MEDIA_STORAGE at
+# runtime; both are installed so switching needs no rebuild.
+#   MEDIA_STORAGE=cloudinary -> cloudinary (25 GB free, image CDN + transforms)
+#   MEDIA_STORAGE=s3         -> django-storages (AWS S3, Cloudflare R2, MinIO)
+cloudinary==1.44.1
+django-cloudinary-storage==0.3.0
 django-storages==1.14.6
 boto3==1.40.29
