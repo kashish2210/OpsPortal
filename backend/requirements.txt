@@ -17,7 +17,7 @@ psycopg[binary]==3.2.10
 
 # Static files / WSGI server
 whitenoise==6.11.0
-gunicorn==23.0.0
+gunicorn==26.0.0
 
 # Images (product photos, avatars)
 pillow==11.3.0
