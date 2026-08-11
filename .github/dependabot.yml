@@ -1,0 +1,46 @@
+# ---------------------------------------------------------------------------
+# Dependabot - free, built into GitHub. Opens PRs for outdated dependencies,
+# which then run through the same CI as any other pull request.
+# ---------------------------------------------------------------------------
+
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(backend)"
+    groups:
+      django:
+        patterns: ["django*", "djangorestframework*", "drf-*"]
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(frontend)"
+    groups:
+      react:
+        patterns: ["react", "react-dom", "react-router*", "@types/react*"]
+      build-tooling:
+        patterns: ["vite", "@vitejs/*", "typescript"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(ci)"
+
+  - package-ecosystem: docker
+    directories: [/backend, /frontend]
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(docker)"

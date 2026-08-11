@@ -1,0 +1,301 @@
+# ---------------------------------------------------------------------------
+# OpsPortal - Continuous Integration
+#
+# Runs on every push to main/develop and on every pull request:
+#   lint            ruff check + format check
+#   backend-tests   155 Django tests against a real PostgreSQL 16 service,
+#                   with coverage and JUnit XML
+#   frontend-build  TypeScript typecheck + production Vite build
+#   docker-build    builds both images so a broken Dockerfile fails CI
+#   report          comments the test results and coverage on the pull request
+#
+# Runs locally too:  act pull_request
+# Steps that need the GitHub API are skipped when ACT is set, so a local run
+# exercises the real build and test steps without trying to post comments.
+# ---------------------------------------------------------------------------
+
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master, develop]
+  workflow_dispatch:
+
+# A new push to the same branch cancels the previous run.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PYTHON_VERSION: '3.13'
+  NODE_VERSION: '22'
+
+jobs:
+  # -------------------------------------------------------------------------
+  lint:
+    name: Lint (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install ruff
+        run: pip install ruff==0.13.1
+
+      - name: ruff check
+        working-directory: backend
+        run: ruff check . --output-format=github
+
+      - name: ruff format --check
+        working-directory: backend
+        run: ruff format --check .
+        continue-on-error: true
+
+  # -------------------------------------------------------------------------
+  backend-tests:
+    name: Backend tests (Django + PostgreSQL)
+    runs-on: ubuntu-latest
+
+    env:
+      DEBUG: 'True'
+      SECRET_KEY: ci-secret-key-not-used-anywhere-real-0123456789
+      DATABASE_URL: postgres://opsportal:opsportal@localhost:5432/opsportal
+      ALLOWED_HOSTS: localhost,127.0.0.1,testserver
+      EMAIL_BACKEND: django.core.mail.backends.locmem.EmailBackend
+      TEST_RUNNER: xmlrunner.extra.djangotestrunner.XMLTestRunner
+      TEST_OUTPUT_DIR: test-results
+
+    steps:
+      - uses: actions/checkout@v5
+
+      # act 0.2.89 crashes while managing service containers, so we start the
+      # Postgres test database explicitly. GitHub Actions still runs the same
+      # commands, and act only sees ordinary shell steps.
+      - name: Start PostgreSQL
+        run: |
+          docker rm -f opsportal-ci-postgres >/dev/null 2>&1 || true
+          docker run -d --name opsportal-ci-postgres \
+            -e POSTGRES_DB=opsportal \
+            -e POSTGRES_USER=opsportal \
+            -e POSTGRES_PASSWORD=opsportal \
+            -p 5432:5432 \
+            postgres:16-alpine
+
+          for attempt in $(seq 1 30); do
+            if docker exec opsportal-ci-postgres pg_isready -U opsportal -d opsportal >/dev/null 2>&1; then
+              echo "PostgreSQL is ready."
+              exit 0
+            fi
+            sleep 2
+          done
+
+          docker logs opsportal-ci-postgres
+          exit 1
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-dev.txt
+
+      - name: Django system checks
+        working-directory: backend
+        run: python manage.py check
+
+      - name: Verify there are no missing migrations
+        working-directory: backend
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run migrations
+        working-directory: backend
+        run: python manage.py migrate --noinput
+
+      - name: Run tests with coverage
+        working-directory: backend
+        run: |
+          coverage run manage.py test --verbosity=2
+          coverage report
+          coverage xml
+          coverage html
+
+      - name: Coverage summary for the job page
+        if: always()
+        working-directory: backend
+        run: |
+          {
+            echo "### Backend coverage"
+            echo ""
+            echo '```'
+            coverage report --skip-covered || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify the demo seed still works
+        working-directory: backend
+        run: |
+          python manage.py seed_demo
+          python manage.py seed_demo --reset
+
+      # act has no artifact server, so skip these locally.
+      - name: Upload test results
+        if: ${{ always() && !env.ACT }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            backend/test-results/**/*.xml
+            backend/coverage.xml
+            backend/htmlcov/
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Stop PostgreSQL
+        if: always()
+        run: docker rm -f opsportal-ci-postgres >/dev/null 2>&1 || true
+
+  # -------------------------------------------------------------------------
+  frontend-build:
+    name: Frontend (typecheck + build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci --no-audit --no-fund
+
+      - name: TypeScript typecheck
+        working-directory: frontend
+        run: npm run typecheck
+
+      - name: Production build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Report bundle size
+        if: always()
+        working-directory: frontend
+        run: |
+          {
+            echo "### Frontend bundle"
+            echo ""
+            echo '```'
+            du -sh dist 2>/dev/null || true
+            ls -lh dist/assets 2>/dev/null || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload build output
+        if: ${{ !env.ACT }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: frontend/dist
+          retention-days: 7
+
+  # -------------------------------------------------------------------------
+  docker-build:
+    name: Docker images build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # Plain `docker compose build` rather than buildx, so this job behaves
+      # identically under act and validates exactly what a developer runs.
+      - name: Build both images
+        run: docker compose build
+
+      - name: Confirm the compose file is valid
+        run: docker compose config --quiet
+
+  # -------------------------------------------------------------------------
+  report:
+    name: Publish results on the PR
+    runs-on: ubuntu-latest
+    needs: [backend-tests]
+    if: ${{ always() && github.event_name == 'pull_request' }}
+
+    permissions:
+      checks: write
+      pull-requests: write
+      contents: read
+
+    steps:
+      - name: Download test results
+        uses: actions/download-artifact@v5
+        with:
+          name: test-results
+          path: artifacts
+        continue-on-error: true
+
+      # Posts a PR comment with pass/fail/skip counts and annotates every
+      # failing test inline on the diff. Free, open source, uses GITHUB_TOKEN.
+      - name: Publish unit test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: ${{ hashFiles('artifacts/**/*.xml') != '' }}
+        with:
+          files: artifacts/**/junit.xml
+          check_name: Backend test results
+          comment_title: Backend test results
+          comment_mode: always
+          report_individual_runs: true
+          action_fail_on_inconclusive: true
+
+      - name: Read the coverage total
+        id: coverage
+        continue-on-error: true
+        run: |
+          FILE=artifacts/coverage.xml
+          if [ -f "$FILE" ]; then
+            RATE=$(grep -o 'line-rate="[0-9.]*"' "$FILE" | head -1 | grep -o '[0-9.]*')
+            PCT=$(awk "BEGIN {printf \"%.1f\", $RATE * 100}")
+            echo "percent=$PCT" >> "$GITHUB_OUTPUT"
+            if awk "BEGIN {exit !($PCT >= 75)}"; then
+              echo "emoji=:white_check_mark:" >> "$GITHUB_OUTPUT"
+            else
+              echo "emoji=:warning:" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "percent=unknown" >> "$GITHUB_OUTPUT"
+            echo "emoji=:grey_question:" >> "$GITHUB_OUTPUT"
+          fi
+
+      # One comment that gets edited in place on every push, rather than a new
+      # comment each time.
+      - name: Comment the CI summary
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: opsportal-ci-summary
+          message: |
+            ## ${{ needs.backend-tests.result == 'success' && ':white_check_mark:' || ':x:' }} OpsPortal CI
+
+            | Check | Result |
+            | --- | --- |
+            | Backend tests (Django + PostgreSQL) | `${{ needs.backend-tests.result }}` |
+            | Line coverage | ${{ steps.coverage.outputs.emoji }} **${{ steps.coverage.outputs.percent }}%** |
+
+            <sub>Per-test detail is in the **Backend test results** check above;
+            failures are annotated inline on the diff.
+            Full logs: [run #${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})</sub>

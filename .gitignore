@@ -1,0 +1,88 @@
+# ---------------------------------------------------------------------------
+# Python / Django
+# ---------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+/backend/staticfiles/
+/backend/media/
+!/backend/media/.gitkeep
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+test-results/
+junit.xml
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# ---------------------------------------------------------------------------
+# Node / React
+# ---------------------------------------------------------------------------
+node_modules/
+/frontend/dist/
+/frontend/.vite/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.tsbuildinfo
+
+# ---------------------------------------------------------------------------
+# Secrets - never commit these
+# ---------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Local secrets for `act` (see .github/act.secrets.example)
+.secrets
+.secrets.*
+!.github/act.secrets.example
+
+# Credentials that sometimes get dropped into a repo by accident
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+.aws/
+
+# ---------------------------------------------------------------------------
+# CI / local runners
+# ---------------------------------------------------------------------------
+# act's local artifact server output
+.artifacts/
+act-artifacts/
+
+# ---------------------------------------------------------------------------
+# Editors / OS
+# ---------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
