@@ -8,10 +8,12 @@ run in development, Docker and production without code changes.
 See ``.env.example`` for the full list of supported variables.
 """
 
+import os
 from datetime import timedelta
 from pathlib import Path
 
 import environ
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -39,7 +41,15 @@ env = environ.Env(
     EMAIL_TIMEOUT=(int, 15),
     DEFAULT_FROM_EMAIL=(str, "OpsPortal <no-reply@opsportal.local>"),
     SERVER_EMAIL=(str, "OpsPortal <no-reply@opsportal.local>"),
-    # -- S3 media storage (bonus) ------------------------------------------
+    # -- media storage (bonus) ---------------------------------------------
+    # local | cloudinary | s3   (see the STORAGES block further down)
+    MEDIA_STORAGE=(str, "local"),
+    CLOUDINARY_CLOUD_NAME=(str, ""),
+    CLOUDINARY_API_KEY=(str, ""),
+    CLOUDINARY_API_SECRET=(str, ""),
+    CLOUDINARY_URL=(str, ""),
+    CLOUDINARY_FOLDER=(str, "opsportal"),
+    # Legacy switch, still honoured: USE_S3=True implies MEDIA_STORAGE=s3.
     USE_S3=(bool, False),
     AWS_ACCESS_KEY_ID=(str, ""),
     AWS_SECRET_ACCESS_KEY=(str, ""),
@@ -198,13 +208,62 @@ MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 # ---------------------------------------------------------------------------
-# Media storage: local filesystem by default, Amazon S3 when USE_S3=True.
-# Product images and avatars are written through Django's storage API, so
-# switching between the two needs no code changes - only env vars.
+# Media storage - product images and avatars.
+#
+# Everything is written through Django's storage API, so switching provider is
+# an env change with no code change:
+#
+#   MEDIA_STORAGE=local       the media/ volume (default; zero setup)
+#   MEDIA_STORAGE=cloudinary  Cloudinary - 25 GB free, image CDN + transforms
+#   MEDIA_STORAGE=s3          Amazon S3, or any S3-compatible provider
+#                             (Cloudflare R2, Backblaze B2, MinIO) via
+#                             AWS_S3_ENDPOINT_URL
+#
+# See docs/ENVIRONMENT.md for where to obtain each provider's credentials.
 # ---------------------------------------------------------------------------
-USE_S3 = env("USE_S3")
+MEDIA_STORAGE = env("MEDIA_STORAGE").strip().lower()
 
-if USE_S3:
+# Legacy switch kept working: USE_S3=True is the same as MEDIA_STORAGE=s3.
+USE_S3 = env("USE_S3")
+if USE_S3 and MEDIA_STORAGE == "local":
+    MEDIA_STORAGE = "s3"
+
+if MEDIA_STORAGE not in ("local", "cloudinary", "s3"):
+    raise ImproperlyConfigured(
+        f"MEDIA_STORAGE must be one of local, cloudinary or s3 - got {MEDIA_STORAGE!r}."
+    )
+
+if MEDIA_STORAGE == "cloudinary":
+    # The SDK accepts either one CLOUDINARY_URL or the three parts separately;
+    # support both so people can paste whichever the dashboard gave them.
+    CLOUDINARY_STORAGE = {
+        "CLOUD_NAME": env("CLOUDINARY_CLOUD_NAME"),
+        "API_KEY": env("CLOUDINARY_API_KEY"),
+        "API_SECRET": env("CLOUDINARY_API_SECRET"),
+        # Namespace everything so the account stays tidy if it is shared.
+        "PREFIX": env("CLOUDINARY_FOLDER"),
+        # Always build https:// URLs; a mixed-content image is invisible in
+        # production until someone opens the console.
+        "SECURE": True,
+        # Keep our own uploaded filename instead of a random public_id, so
+        # objects stay greppable against the product SKU.
+        "MAGIC_FILE_PATH": "magic",
+    }
+
+    if env("CLOUDINARY_URL"):
+        # cloudinary reads this from the process environment directly.
+        os.environ.setdefault("CLOUDINARY_URL", env("CLOUDINARY_URL"))
+    elif not all(CLOUDINARY_STORAGE[k] for k in ("CLOUD_NAME", "API_KEY", "API_SECRET")):
+        raise ImproperlyConfigured(
+            "MEDIA_STORAGE=cloudinary needs CLOUDINARY_CLOUD_NAME, "
+            "CLOUDINARY_API_KEY and CLOUDINARY_API_SECRET (or CLOUDINARY_URL)."
+        )
+
+    INSTALLED_APPS = [*INSTALLED_APPS, "cloudinary", "cloudinary_storage"]
+
+    _default_storage = {"BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage"}
+
+elif MEDIA_STORAGE == "s3":
     AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
     AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME")
@@ -212,15 +271,26 @@ if USE_S3:
     AWS_QUERYSTRING_AUTH = env("AWS_QUERYSTRING_AUTH")
     AWS_QUERYSTRING_EXPIRE = env("AWS_QUERYSTRING_EXPIRE")
     AWS_S3_FILE_OVERWRITE = False
-    AWS_DEFAULT_ACL = None  # respect the bucket's own policy
+    # R2 and B2 reject ACLs outright; on S3 this defers to the bucket policy.
+    AWS_DEFAULT_ACL = None
     AWS_S3_OBJECT_PARAMETERS = {"CacheControl": "max-age=86400"}
     AWS_S3_SIGNATURE_VERSION = "s3v4"
 
-    # Optional: a CloudFront domain, or a MinIO/LocalStack endpoint for testing.
+    # A CDN hostname in front of the bucket: CloudFront, or an R2 custom domain
+    # / r2.dev subdomain. Pair with AWS_QUERYSTRING_AUTH=False for stable,
+    # cacheable URLs instead of expiring pre-signed ones.
     if env("AWS_S3_CUSTOM_DOMAIN"):
         AWS_S3_CUSTOM_DOMAIN = env("AWS_S3_CUSTOM_DOMAIN")
+
+    # Any non-AWS S3-compatible endpoint (R2, B2, MinIO, LocalStack).
     if env("AWS_S3_ENDPOINT_URL"):
         AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL")
+        # botocore >= 1.36 adds a CRC32 checksum to every upload by default.
+        # Several S3-compatible providers reject the unfamiliar header with an
+        # opaque 400, so relax it to "when_required" - but only for non-AWS
+        # endpoints, leaving real S3 on the stricter default.
+        os.environ.setdefault("AWS_REQUEST_CHECKSUM_CALCULATION", "when_required")
+        os.environ.setdefault("AWS_RESPONSE_CHECKSUM_VALIDATION", "when_required")
 
     _default_storage = {
         "BACKEND": "storages.backends.s3.S3Storage",

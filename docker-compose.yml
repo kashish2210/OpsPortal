@@ -89,7 +89,17 @@ services:
       EMAIL_USE_TLS: ${EMAIL_USE_TLS:-False}
       EMAIL_USE_SSL: ${EMAIL_USE_SSL:-False}
       DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-OpsPortal <no-reply@opsportal.local>}
-      # S3 media storage (bonus) - off by default, uses the local volume.
+      # Media storage (bonus): local | cloudinary | s3.
+      # Defaults to the local media_files volume so a fresh clone needs no
+      # credentials at all.
+      MEDIA_STORAGE: ${MEDIA_STORAGE:-local}
+      # -- Cloudinary --
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      CLOUDINARY_URL: ${CLOUDINARY_URL:-}
+      CLOUDINARY_FOLDER: ${CLOUDINARY_FOLDER:-opsportal}
+      # -- S3 / Cloudflare R2 / Backblaze B2 / MinIO --
       USE_S3: ${USE_S3:-False}
       AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
       AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
@@ -97,6 +107,7 @@ services:
       AWS_S3_REGION_NAME: ${AWS_S3_REGION_NAME:-ap-south-1}
       AWS_S3_CUSTOM_DOMAIN: ${AWS_S3_CUSTOM_DOMAIN:-}
       AWS_S3_ENDPOINT_URL: ${AWS_S3_ENDPOINT_URL:-}
+      AWS_QUERYSTRING_AUTH: ${AWS_QUERYSTRING_AUTH:-True}
       ACCESS_TOKEN_LIFETIME_MINUTES: ${ACCESS_TOKEN_LIFETIME_MINUTES:-60}
       REFRESH_TOKEN_LIFETIME_DAYS: ${REFRESH_TOKEN_LIFETIME_DAYS:-7}
       SEED_DEMO_DATA: ${SEED_DEMO_DATA:-True}
