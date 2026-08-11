@@ -32,9 +32,9 @@ def _lock_products(product_ids):
     """Lock the given products in a deterministic order to avoid deadlocks."""
     products = {
         product.pk: product
-        for product in Product.objects.select_for_update().filter(
-            pk__in=sorted(set(product_ids))
-        ).order_by("pk")
+        for product in Product.objects.select_for_update()
+        .filter(pk__in=sorted(set(product_ids)))
+        .order_by("pk")
     }
     missing = sorted(set(product_ids) - set(products))
     if missing:
@@ -59,7 +59,9 @@ def apply_movement(
 ):
     """Record a single stock movement and update the running balance."""
     movements = apply_movements(
-        lines=[StockLine(product_id=product.pk if hasattr(product, "pk") else int(product), quantity=quantity)],
+        lines=[
+            StockLine(product_id=product.pk if hasattr(product, "pk") else int(product), quantity=quantity)
+        ],
         movement_type=movement_type,
         reason=reason,
         user=user,

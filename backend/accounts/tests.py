@@ -41,9 +41,7 @@ class UserModelTests(TestCase):
 class LoginAPITests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(
-            "riya", "riya@example.com", "Str0ng!pass", role=Role.SALES
-        )
+        self.user = User.objects.create_user("riya", "riya@example.com", "Str0ng!pass", role=Role.SALES)
 
     def test_login_with_username(self):
         response = self.client.post(
@@ -57,7 +55,8 @@ class LoginAPITests(TestCase):
 
     def test_login_with_email(self):
         response = self.client.post(
-            "/api/auth/login/", {"username": "RIYA@example.com", "password": "Str0ng!pass"},
+            "/api/auth/login/",
+            {"username": "RIYA@example.com", "password": "Str0ng!pass"},
             format="json",
         )
         self.assertEqual(response.status_code, 200, response.data)
@@ -197,7 +196,8 @@ class UserAdminAPITests(TestCase):
     def test_creating_a_user_without_a_password_fails(self):
         self.client.force_authenticate(self.admin)
         response = self.client.post(
-            "/api/users/", {"username": "x", "email": "x@example.com", "role": Role.SALES},
+            "/api/users/",
+            {"username": "x", "email": "x@example.com", "role": Role.SALES},
             format="json",
         )
         self.assertEqual(response.status_code, 400)
@@ -236,9 +236,7 @@ class AuthPageTests(TestCase):
     """Every server-rendered auth page must render with the sketch theme."""
 
     def setUp(self):
-        self.user = User.objects.create_user(
-            "riya", "riya@example.com", "Str0ng!pass", role=Role.SALES
-        )
+        self.user = User.objects.create_user("riya", "riya@example.com", "Str0ng!pass", role=Role.SALES)
 
     def test_login_page_renders(self):
         response = self.client.get(reverse("accounts:login"))
@@ -262,9 +260,7 @@ class AuthPageTests(TestCase):
                 self.assertEqual(response.url, reverse("accounts:profile"))
 
     def test_bad_credentials_show_a_friendly_error(self):
-        response = self.client.post(
-            reverse("accounts:login"), {"username": "riya", "password": "nope"}
-        )
+        response = self.client.post(reverse("accounts:login"), {"username": "riya", "password": "nope"})
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "did not match any account")
 
@@ -318,9 +314,7 @@ class AuthPageTests(TestCase):
         self.assertTemplateUsed(response, "registration/logged_out.html")
 
     def test_password_reset_flow_sends_a_working_link(self):
-        response = self.client.post(
-            reverse("accounts:password_reset"), {"email": "riya@example.com"}
-        )
+        response = self.client.post(reverse("accounts:password_reset"), {"email": "riya@example.com"})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(len(mail.outbox), 1)
 

@@ -16,7 +16,8 @@ so the React client only ever has to parse one shape.
 
 import logging
 
-from django.core.exceptions import PermissionDenied, ValidationError as DjangoValidationError
+from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import IntegrityError
 from django.http import Http404
 from rest_framework import exceptions, status
@@ -83,9 +84,7 @@ def api_exception_handler(exc, context):
     elif isinstance(exc, PermissionDenied):
         exc = exceptions.PermissionDenied()
     elif isinstance(exc, DjangoValidationError):
-        exc = exceptions.ValidationError(
-            getattr(exc, "message_dict", None) or list(exc.messages)
-        )
+        exc = exceptions.ValidationError(getattr(exc, "message_dict", None) or list(exc.messages))
     elif isinstance(exc, IntegrityError):
         logger.warning("Database integrity error: %s", exc)
         exc = exceptions.ValidationError(

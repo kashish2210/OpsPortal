@@ -17,9 +17,7 @@ class SalesChallanFilter(filters.FilterSet):
     date_to = filters.DateFilter(field_name="challan_date", lookup_expr="lte")
     min_amount = filters.NumberFilter(field_name="grand_total", lookup_expr="gte")
     max_amount = filters.NumberFilter(field_name="grand_total", lookup_expr="lte")
-    product = filters.NumberFilter(
-        field_name="items__product_id", distinct=True, label="Contains product id"
-    )
+    product = filters.NumberFilter(field_name="items__product_id", distinct=True, label="Contains product id")
 
     class Meta:
         model = SalesChallan

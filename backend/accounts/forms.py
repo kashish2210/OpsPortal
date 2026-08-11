@@ -38,7 +38,9 @@ def decode_data_url(data_url, *, field_label="image"):
     try:
         header, payload = data_url.split(";base64,", 1)
     except ValueError:
-        raise forms.ValidationError(_("The %(label)s could not be read.") % {"label": field_label})
+        # `from None` - the parse error is an implementation detail; the user
+        # only needs the friendly message.
+        raise forms.ValidationError(_("The %(label)s could not be read.") % {"label": field_label}) from None
 
     mime = header.split(":")[-1].lower()
     extension = {
@@ -53,7 +55,9 @@ def decode_data_url(data_url, *, field_label="image"):
     try:
         raw = base64.b64decode(payload, validate=True)
     except (binascii.Error, ValueError):
-        raise forms.ValidationError(_("The %(label)s could not be decoded.") % {"label": field_label})
+        raise forms.ValidationError(
+            _("The %(label)s could not be decoded.") % {"label": field_label}
+        ) from None
 
     if len(raw) > MAX_AVATAR_BYTES:
         raise forms.ValidationError(_("The %(label)s must be smaller than 3 MB.") % {"label": field_label})

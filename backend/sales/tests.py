@@ -161,8 +161,9 @@ class ChallanServiceTests(TestCase):
 class ChallanSnapshotTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user("sl", "sl@example.com", "pw", role="SALES")
-        self.customer = make_customer(business_name="Acme Traders", gst_number="27AAPFU0939F1ZV",
-                                      customer_type=CustomerType.WHOLESALE)
+        self.customer = make_customer(
+            business_name="Acme Traders", gst_number="27AAPFU0939F1ZV", customer_type=CustomerType.WHOLESALE
+        )
         self.product = make_product(sku="SNAP-1", stock=50, unit_price=Decimal("200.00"))
 
     def test_line_stores_a_product_snapshot(self):
@@ -258,9 +259,7 @@ class ChallanAPITests(TestCase):
         self.assertEqual(self.product.current_stock, 15)
 
     def test_save_and_confirm_rolls_back_completely_when_stock_is_short(self):
-        response = self._create(
-            {"items": [{"product": self.product.pk, "quantity": 500}]}, confirm=True
-        )
+        response = self._create({"items": [{"product": self.product.pk, "quantity": 500}]}, confirm=True)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.data["error"]["code"], "insufficient_stock")
         self.assertEqual(SalesChallan.objects.count(), 0, "no orphan draft may survive")
@@ -292,9 +291,7 @@ class ChallanAPITests(TestCase):
 
     def test_confirmed_challan_cannot_be_edited(self):
         challan_id = self._create(confirm=True).data["id"]
-        response = self.client.patch(
-            f"/api/challans/{challan_id}/", {"notes": "changed"}, format="json"
-        )
+        response = self.client.patch(f"/api/challans/{challan_id}/", {"notes": "changed"}, format="json")
         self.assertEqual(response.status_code, 400)
 
     def test_confirmed_challan_cannot_be_deleted(self):

@@ -19,9 +19,7 @@ MOBILE_VALIDATOR = RegexValidator(
     message=_("Enter a valid mobile number (7-20 digits, optional +country code)."),
 )
 
-PINCODE_VALIDATOR = RegexValidator(
-    regex=r"^[0-9]{4,10}$", message=_("Enter a valid postal code.")
-)
+PINCODE_VALIDATOR = RegexValidator(regex=r"^[0-9]{4,10}$", message=_("Enter a valid postal code."))
 
 
 class CustomerType(models.TextChoices):
@@ -113,11 +111,17 @@ class Customer(AuthoredModel):
     pincode = models.CharField(_("pincode"), max_length=10, blank=True, validators=[PINCODE_VALIDATOR])
 
     credit_limit = models.DecimalField(
-        _("credit limit"), max_digits=12, decimal_places=2, default=0,
+        _("credit limit"),
+        max_digits=12,
+        decimal_places=2,
+        default=0,
         help_text=_("Informational only; not enforced on challans."),
     )
     follow_up_date = models.DateField(
-        _("next follow-up"), null=True, blank=True, db_index=True,
+        _("next follow-up"),
+        null=True,
+        blank=True,
+        db_index=True,
         help_text=_("Set automatically when a follow-up schedules the next contact."),
     )
     notes = models.TextField(_("notes"), blank=True)
@@ -174,7 +178,9 @@ class FollowUp(TimeStampedModel):
         _("channel"), max_length=20, choices=FollowUpChannel.choices, default=FollowUpChannel.CALL
     )
     next_follow_up_date = models.DateField(
-        _("next follow-up"), null=True, blank=True,
+        _("next follow-up"),
+        null=True,
+        blank=True,
         help_text=_("When set, this becomes the customer's next follow-up date."),
     )
     created_by = models.ForeignKey(

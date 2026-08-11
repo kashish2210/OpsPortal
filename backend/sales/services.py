@@ -61,8 +61,7 @@ def confirm_challan(challan, user=None):
     # Raises InsufficientStockError with a per-product breakdown when short.
     stock_services.apply_movements(
         lines=[
-            stock_services.StockLine(product_id=item.product_id, quantity=item.quantity)
-            for item in items
+            stock_services.StockLine(product_id=item.product_id, quantity=item.quantity) for item in items
         ],
         movement_type=MovementType.OUT,
         reason=MovementReason.SALE,

@@ -23,8 +23,7 @@ def validate_uploaded_image(uploaded):
     max_bytes = settings.MAX_UPLOAD_SIZE_BYTES
     if uploaded.size > max_bytes:
         raise serializers.ValidationError(
-            f"The image is {uploaded.size / 1_048_576:.1f} MB; the limit is "
-            f"{max_bytes // 1_048_576} MB."
+            f"The image is {uploaded.size / 1_048_576:.1f} MB; the limit is {max_bytes // 1_048_576} MB."
         )
 
     # Django's ImageField already verifies the file really is an image via
@@ -267,12 +266,15 @@ class InventoryStatsSerializer(serializers.Serializer):
 
 
 CHOICES_PAYLOAD = {
-    "unit": [{"value": v, "label": str(l)} for v, l in UnitOfMeasure.choices],
-    "movement_type": [{"value": v, "label": str(l)} for v, l in MovementType.choices],
+    "unit": [{"value": value, "label": str(label)} for value, label in UnitOfMeasure.choices],
+    "movement_type": [{"value": value, "label": str(label)} for value, label in MovementType.choices],
+    # SALE and CHALLAN_CANCELLED are written by the challan workflow, so they
+    # are hidden from the manual movement form but kept in the "all" list for
+    # filtering the ledger.
     "movement_reason": [
-        {"value": v, "label": str(l)}
-        for v, l in MovementReason.choices
-        if v not in (MovementReason.SALE, MovementReason.CHALLAN_CANCELLED)
+        {"value": value, "label": str(label)}
+        for value, label in MovementReason.choices
+        if value not in (MovementReason.SALE, MovementReason.CHALLAN_CANCELLED)
     ],
-    "movement_reason_all": [{"value": v, "label": str(l)} for v, l in MovementReason.choices],
+    "movement_reason_all": [{"value": value, "label": str(label)} for value, label in MovementReason.choices],
 }

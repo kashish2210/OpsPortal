@@ -48,34 +48,65 @@ def _styles():
     base = getSampleStyleSheet()
     return {
         "title": ParagraphStyle(
-            "title", parent=base["Title"], fontName="Helvetica-Bold",
-            fontSize=20, leading=24, textColor=INK, alignment=0, spaceAfter=0,
+            "title",
+            parent=base["Title"],
+            fontName="Helvetica-Bold",
+            fontSize=20,
+            leading=24,
+            textColor=INK,
+            alignment=0,
+            spaceAfter=0,
         ),
         "company": ParagraphStyle(
-            "company", parent=base["Normal"], fontSize=8.5, leading=12, textColor=MUTED,
+            "company",
+            parent=base["Normal"],
+            fontSize=8.5,
+            leading=12,
+            textColor=MUTED,
         ),
         "doc_label": ParagraphStyle(
-            "doc_label", parent=base["Normal"], fontName="Helvetica-Bold",
-            fontSize=14, leading=17, textColor=INK, alignment=TA_RIGHT,
+            "doc_label",
+            parent=base["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=14,
+            leading=17,
+            textColor=INK,
+            alignment=TA_RIGHT,
         ),
         "doc_meta": ParagraphStyle(
-            "doc_meta", parent=base["Normal"], fontSize=9, leading=13,
-            textColor=MUTED, alignment=TA_RIGHT,
+            "doc_meta",
+            parent=base["Normal"],
+            fontSize=9,
+            leading=13,
+            textColor=MUTED,
+            alignment=TA_RIGHT,
         ),
         "h": ParagraphStyle(
-            "h", parent=base["Normal"], fontName="Helvetica-Bold",
-            fontSize=9, leading=12, textColor=MUTED,
+            "h",
+            parent=base["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=9,
+            leading=12,
+            textColor=MUTED,
         ),
         "body": ParagraphStyle("body", parent=base["Normal"], fontSize=9.5, leading=13, textColor=INK),
         "small": ParagraphStyle("small", parent=base["Normal"], fontSize=8, leading=11, textColor=MUTED),
         "cell": ParagraphStyle("cell", parent=base["Normal"], fontSize=8.5, leading=11, textColor=INK),
         "cell_b": ParagraphStyle(
-            "cell_b", parent=base["Normal"], fontName="Helvetica-Bold",
-            fontSize=8.5, leading=11, textColor=INK,
+            "cell_b",
+            parent=base["Normal"],
+            fontName="Helvetica-Bold",
+            fontSize=8.5,
+            leading=11,
+            textColor=INK,
         ),
         "footer": ParagraphStyle(
-            "footer", parent=base["Normal"], fontSize=7.5, leading=10,
-            textColor=MUTED, alignment=TA_CENTER,
+            "footer",
+            parent=base["Normal"],
+            fontSize=7.5,
+            leading=10,
+            textColor=MUTED,
+            alignment=TA_CENTER,
         ),
     }
 
@@ -99,9 +130,28 @@ def _money(value):
 
 def _amount_in_words(amount):
     """Rupees in words - required on Indian delivery/tax documents."""
-    ones = ["", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
-            "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
-            "Seventeen", "Eighteen", "Nineteen"]
+    ones = [
+        "",
+        "One",
+        "Two",
+        "Three",
+        "Four",
+        "Five",
+        "Six",
+        "Seven",
+        "Eight",
+        "Nine",
+        "Ten",
+        "Eleven",
+        "Twelve",
+        "Thirteen",
+        "Fourteen",
+        "Fifteen",
+        "Sixteen",
+        "Seventeen",
+        "Eighteen",
+        "Nineteen",
+    ]
     tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"]
 
     def under_hundred(n):
@@ -156,19 +206,29 @@ def _header(challan, styles):
     )
 
     table = Table(
-        [[Paragraph(company, styles["company"]),
-          [Paragraph("DELIVERY CHALLAN", styles["doc_label"]),
-           Spacer(1, 4),
-           Paragraph(meta, styles["doc_meta"])]]],
+        [
+            [
+                Paragraph(company, styles["company"]),
+                [
+                    Paragraph("DELIVERY CHALLAN", styles["doc_label"]),
+                    Spacer(1, 4),
+                    Paragraph(meta, styles["doc_meta"]),
+                ],
+            ]
+        ],
         colWidths=[105 * mm, 65 * mm],
     )
-    table.setStyle(TableStyle([
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("LEFTPADDING", (0, 0), (-1, -1), 0),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 0),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
-        ("LINEBELOW", (0, 0), (-1, -1), 1.2, INK),
-    ]))
+    table.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (-1, -1), 0),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 0),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+                ("LINEBELOW", (0, 0), (-1, -1), 1.2, INK),
+            ]
+        )
+    )
     return table
 
 
@@ -195,19 +255,27 @@ def _parties(challan, styles):
         )
 
     table = Table(
-        [[Paragraph("BILL / SHIP TO", styles["h"]), Paragraph("DISPATCH DETAILS", styles["h"])],
-         [Paragraph("<br/>".join(billed), styles["body"]),
-          Paragraph("<br/>".join(dispatch), styles["body"])]],
+        [
+            [Paragraph("BILL / SHIP TO", styles["h"]), Paragraph("DISPATCH DETAILS", styles["h"])],
+            [
+                Paragraph("<br/>".join(billed), styles["body"]),
+                Paragraph("<br/>".join(dispatch), styles["body"]),
+            ],
+        ],
         colWidths=[85 * mm, 85 * mm],
     )
-    table.setStyle(TableStyle([
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("LEFTPADDING", (0, 0), (0, -1), 0),
-        ("LEFTPADDING", (1, 0), (1, -1), 8),
-        ("TOPPADDING", (0, 1), (-1, 1), 4),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
-        ("LINEAFTER", (0, 0), (0, -1), 0.5, RULE),
-    ]))
+    table.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("LEFTPADDING", (0, 0), (0, -1), 0),
+                ("LEFTPADDING", (1, 0), (1, -1), 8),
+                ("TOPPADDING", (0, 1), (-1, 1), 4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("LINEAFTER", (0, 0), (0, -1), 0.5, RULE),
+            ]
+        )
+    )
     return table
 
 
@@ -216,40 +284,49 @@ def _lines(challan, styles):
     rows = [[Paragraph(f"<b>{h}</b>", styles["cell"]) for h in header]]
 
     for index, item in enumerate(challan.items.all(), start=1):
-        rows.append([
-            Paragraph(str(index), styles["cell"]),
-            Paragraph(item.product_sku, styles["cell"]),
-            Paragraph(
-                f"{item.product_name}"
-                + (f"<br/><font size=7 color='#6f6a63'>{item.product_category}</font>"
-                   if item.product_category else ""),
-                styles["cell"],
-            ),
-            Paragraph(f"{item.quantity} {item.product_unit}", styles["cell"]),
-            Paragraph(_money(item.unit_price), styles["cell"]),
-            Paragraph(_money(item.line_total), styles["cell"]),
-            Paragraph(f"{item.tax_rate:g}%<br/>{_money(item.line_tax)}", styles["cell"]),
-            Paragraph(_money(item.line_total + item.line_tax), styles["cell_b"]),
-        ])
+        rows.append(
+            [
+                Paragraph(str(index), styles["cell"]),
+                Paragraph(item.product_sku, styles["cell"]),
+                Paragraph(
+                    f"{item.product_name}"
+                    + (
+                        f"<br/><font size=7 color='#6f6a63'>{item.product_category}</font>"
+                        if item.product_category
+                        else ""
+                    ),
+                    styles["cell"],
+                ),
+                Paragraph(f"{item.quantity} {item.product_unit}", styles["cell"]),
+                Paragraph(_money(item.unit_price), styles["cell"]),
+                Paragraph(_money(item.line_total), styles["cell"]),
+                Paragraph(f"{item.tax_rate:g}%<br/>{_money(item.line_tax)}", styles["cell"]),
+                Paragraph(_money(item.line_total + item.line_tax), styles["cell_b"]),
+            ]
+        )
 
     table = Table(
         rows,
         colWidths=[8 * mm, 26 * mm, 54 * mm, 17 * mm, 19 * mm, 20 * mm, 16 * mm, 20 * mm],
         repeatRows=1,
     )
-    table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), ACCENT),
-        ("LINEBELOW", (0, 0), (-1, 0), 1, INK),
-        ("LINEBELOW", (0, 1), (-1, -1), 0.4, RULE),
-        ("BOX", (0, 0), (-1, -1), 0.8, INK),
-        ("VALIGN", (0, 0), (-1, -1), "TOP"),
-        ("ALIGN", (3, 0), (-1, -1), "RIGHT"),
-        ("TOPPADDING", (0, 0), (-1, -1), 5),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
-        ("LEFTPADDING", (0, 0), (-1, -1), 4),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, PAPER]),
-    ]))
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, 0), ACCENT),
+                ("LINEBELOW", (0, 0), (-1, 0), 1, INK),
+                ("LINEBELOW", (0, 1), (-1, -1), 0.4, RULE),
+                ("BOX", (0, 0), (-1, -1), 0.8, INK),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("ALIGN", (3, 0), (-1, -1), "RIGHT"),
+                ("TOPPADDING", (0, 0), (-1, -1), 5),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+                ("LEFTPADDING", (0, 0), (-1, -1), 4),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, PAPER]),
+            ]
+        )
+    )
     return table
 
 
@@ -261,39 +338,55 @@ def _totals(challan, styles):
         ["Grand total", _money(challan.grand_total)],
     ]
     table = Table(
-        [[Paragraph(label, styles["cell"] if i < 3 else styles["cell_b"]),
-          Paragraph(value, styles["cell"] if i < 3 else styles["cell_b"])]
-         for i, (label, value) in enumerate(rows)],
+        [
+            [
+                Paragraph(label, styles["cell"] if i < 3 else styles["cell_b"]),
+                Paragraph(value, styles["cell"] if i < 3 else styles["cell_b"]),
+            ]
+            for i, (label, value) in enumerate(rows)
+        ],
         colWidths=[35 * mm, 30 * mm],
         hAlign="RIGHT",
     )
-    table.setStyle(TableStyle([
-        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
-        ("LINEABOVE", (0, 3), (-1, 3), 0.8, INK),
-        ("BACKGROUND", (0, 3), (-1, 3), ACCENT),
-        ("TOPPADDING", (0, 0), (-1, -1), 3),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
-        ("LEFTPADDING", (0, 0), (-1, -1), 5),
-        ("RIGHTPADDING", (0, 0), (-1, -1), 5),
-        ("BOX", (0, 0), (-1, -1), 0.5, RULE),
-    ]))
+    table.setStyle(
+        TableStyle(
+            [
+                ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+                ("LINEABOVE", (0, 3), (-1, 3), 0.8, INK),
+                ("BACKGROUND", (0, 3), (-1, 3), ACCENT),
+                ("TOPPADDING", (0, 0), (-1, -1), 3),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("LEFTPADDING", (0, 0), (-1, -1), 5),
+                ("RIGHTPADDING", (0, 0), (-1, -1), 5),
+                ("BOX", (0, 0), (-1, -1), 0.5, RULE),
+            ]
+        )
+    )
     return table
 
 
 def _signatures(styles):
     table = Table(
-        [[Paragraph("Receiver's signature", styles["small"]),
-          Paragraph(f"For {settings.COMPANY_NAME}", styles["small"])]],
+        [
+            [
+                Paragraph("Receiver's signature", styles["small"]),
+                Paragraph(f"For {settings.COMPANY_NAME}", styles["small"]),
+            ]
+        ],
         colWidths=[85 * mm, 85 * mm],
         rowHeights=[20 * mm],
     )
-    table.setStyle(TableStyle([
-        ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
-        ("LINEABOVE", (0, 0), (0, 0), 0.5, INK),
-        ("LINEABOVE", (1, 0), (1, 0), 0.5, INK),
-        ("ALIGN", (1, 0), (1, 0), "RIGHT"),
-        ("TOPPADDING", (0, 0), (-1, -1), 2),
-    ]))
+    table.setStyle(
+        TableStyle(
+            [
+                ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
+                ("LINEABOVE", (0, 0), (0, 0), 0.5, INK),
+                ("LINEABOVE", (1, 0), (1, 0), 0.5, INK),
+                ("ALIGN", (1, 0), (1, 0), "RIGHT"),
+                ("TOPPADDING", (0, 0), (-1, -1), 2),
+            ]
+        )
+    )
     return table
 
 
@@ -315,7 +408,8 @@ def _page_furniture(canvas, doc, challan):
     canvas.setFont("Helvetica", 7.5)
     canvas.setFillColor(MUTED)
     canvas.drawString(
-        20 * mm, 12 * mm,
+        20 * mm,
+        12 * mm,
         f"{challan.challan_number} · generated {timezone.localtime():%d %b %Y %H:%M}",
     )
     canvas.drawRightString(190 * mm, 12 * mm, f"Page {canvas.getPageNumber()}")
@@ -351,9 +445,7 @@ def render_challan_pdf(challan):
         Spacer(1, 8),
         _totals(challan, styles),
         Spacer(1, 6),
-        Paragraph(
-            f"<b>Amount in words:</b> {_amount_in_words(challan.grand_total)}", styles["small"]
-        ),
+        Paragraph(f"<b>Amount in words:</b> {_amount_in_words(challan.grand_total)}", styles["small"]),
     ]
 
     if challan.notes:
@@ -364,8 +456,7 @@ def render_challan_pdf(challan):
         story += [
             Spacer(1, 6),
             Paragraph(
-                f"<b>Cancelled</b> on "
-                f"{timezone.localtime(challan.cancelled_at):%d %b %Y %H:%M} - {reason}"
+                f"<b>Cancelled</b> on {timezone.localtime(challan.cancelled_at):%d %b %Y %H:%M} - {reason}"
                 if challan.cancelled_at
                 else f"<b>Cancelled</b> - {reason}",
                 styles["small"],
@@ -374,15 +465,17 @@ def render_challan_pdf(challan):
 
     story += [
         Spacer(1, 14),
-        KeepTogether([
-            Paragraph(
-                "Goods once dispatched are covered by the terms agreed with the customer. "
-                "Please check the quantities before signing.",
-                styles["footer"],
-            ),
-            Spacer(1, 10),
-            _signatures(styles),
-        ]),
+        KeepTogether(
+            [
+                Paragraph(
+                    "Goods once dispatched are covered by the terms agreed with the customer. "
+                    "Please check the quantities before signing.",
+                    styles["footer"],
+                ),
+                Spacer(1, 10),
+                _signatures(styles),
+            ]
+        ),
     ]
 
     doc.build(

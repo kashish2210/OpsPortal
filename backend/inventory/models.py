@@ -99,9 +99,7 @@ class Product(AuthoredModel):
         default=0,
         help_text=_("A low-stock warning is raised at or below this quantity."),
     )
-    location = models.CharField(
-        _("location / warehouse"), max_length=120, blank=True, db_index=True
-    )
+    location = models.CharField(_("location / warehouse"), max_length=120, blank=True, db_index=True)
     is_active = models.BooleanField(_("active"), default=True, db_index=True)
 
     # Written through Django's storage API, so it lands on the local volume or
@@ -179,14 +177,15 @@ class StockMovement(TimeStampedModel):
     movement_type = models.CharField(
         _("movement type"), max_length=3, choices=MovementType.choices, db_index=True
     )
-    quantity = models.PositiveIntegerField(
-        _("quantity changed"), validators=[MinValueValidator(1)]
-    )
+    quantity = models.PositiveIntegerField(_("quantity changed"), validators=[MinValueValidator(1)])
     reason = models.CharField(
         _("reason"), max_length=30, choices=MovementReason.choices, default=MovementReason.ADJUSTMENT
     )
     reference = models.CharField(
-        _("reference"), max_length=60, blank=True, db_index=True,
+        _("reference"),
+        max_length=60,
+        blank=True,
+        db_index=True,
         help_text=_("Challan number, purchase invoice number, ..."),
     )
     notes = models.TextField(_("notes"), blank=True)

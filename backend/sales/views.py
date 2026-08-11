@@ -220,13 +220,11 @@ class SalesChallanViewSet(viewsets.ModelViewSet):
             "Add `?disposition=inline` to preview it in the browser instead of "
             "downloading."
         ),
-        parameters=[
-            OpenApiParameter(
-                "disposition", str, description="attachment (default) | inline"
-            )
-        ],
-        responses={(200, "application/pdf"): OpenApiTypes.BINARY,
-                   404: OpenApiResponse(description="Challan not found")},
+        parameters=[OpenApiParameter("disposition", str, description="attachment (default) | inline")],
+        responses={
+            (200, "application/pdf"): OpenApiTypes.BINARY,
+            404: OpenApiResponse(description="Challan not found"),
+        },
     )
     @action(detail=True, methods=["get"], renderer_classes=[PDFRenderer])
     def pdf(self, request, pk=None):

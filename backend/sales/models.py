@@ -78,9 +78,7 @@ class SalesChallan(TimeStampedModel):
     total_amount = models.DecimalField(
         _("total amount"), max_digits=14, decimal_places=2, default=Decimal("0.00")
     )
-    total_tax = models.DecimalField(
-        _("total tax"), max_digits=14, decimal_places=2, default=Decimal("0.00")
-    )
+    total_tax = models.DecimalField(_("total tax"), max_digits=14, decimal_places=2, default=Decimal("0.00"))
     grand_total = models.DecimalField(
         _("grand total"), max_digits=14, decimal_places=2, default=Decimal("0.00")
     )
@@ -139,9 +137,7 @@ class SalesChallan(TimeStampedModel):
         """``CH-YYYYMM-00001`` - the counter restarts every month."""
         on_date = on_date or timezone.localdate()
         period = on_date.strftime("%Y%m")
-        return Sequence.next_formatted(
-            f"sales.challan:{period}", prefix=f"CH-{period}-", padding=5
-        )
+        return Sequence.next_formatted(f"sales.challan:{period}", prefix=f"CH-{period}-", padding=5)
 
     def copy_customer_snapshot(self):
         customer = self.customer
@@ -219,9 +215,7 @@ class ChallanItem(models.Model):
     line_total = models.DecimalField(
         _("line total"), max_digits=14, decimal_places=2, default=Decimal("0.00")
     )
-    line_tax = models.DecimalField(
-        _("line tax"), max_digits=14, decimal_places=2, default=Decimal("0.00")
-    )
+    line_tax = models.DecimalField(_("line tax"), max_digits=14, decimal_places=2, default=Decimal("0.00"))
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -237,6 +231,13 @@ class ChallanItem(models.Model):
 
     def __str__(self):
         return f"{self.product_sku} x {self.quantity}"
+
+    # Django style guide (and ruff's DJ012): save() goes before custom methods.
+    def save(self, *args, **kwargs):
+        if not self.product_sku:
+            self.take_snapshot(keep_price=self.unit_price is not None)
+        self.compute_totals()
+        super().save(*args, **kwargs)
 
     def take_snapshot(self, *, keep_price=False):
         """Freeze the product's current details onto this line.
@@ -259,9 +260,3 @@ class ChallanItem(models.Model):
             Decimal("0.01")
         )
         return self
-
-    def save(self, *args, **kwargs):
-        if not self.product_sku:
-            self.take_snapshot(keep_price=self.unit_price is not None)
-        self.compute_totals()
-        super().save(*args, **kwargs)

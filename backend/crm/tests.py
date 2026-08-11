@@ -128,7 +128,9 @@ class CustomerAPITests(TestCase):
 
     def test_filter_by_status_and_type(self):
         Customer.objects.create(
-            name="Lead One", mobile="9700000001", status=CustomerStatus.LEAD,
+            name="Lead One",
+            mobile="9700000001",
+            status=CustomerStatus.LEAD,
             customer_type=CustomerType.RETAIL,
         )
         self.assertEqual(self.client.get("/api/customers/?status=LEAD").data["count"], 1)
@@ -148,8 +150,11 @@ class CustomerAPITests(TestCase):
         next_date = (timezone.localdate() + timedelta(days=4)).isoformat()
         response = self.client.post(
             f"/api/customers/{self.customer.pk}/follow-ups/",
-            {"note": "Spoke to the owner about the new rate card.", "channel": "CALL",
-             "next_follow_up_date": next_date},
+            {
+                "note": "Spoke to the owner about the new rate card.",
+                "channel": "CALL",
+                "next_follow_up_date": next_date,
+            },
             format="json",
         )
         self.assertEqual(response.status_code, 201, response.data)
@@ -167,8 +172,10 @@ class CustomerAPITests(TestCase):
     def test_follow_up_date_cannot_be_in_the_past(self):
         response = self.client.post(
             f"/api/customers/{self.customer.pk}/follow-ups/",
-            {"note": "Called the shop today.",
-             "next_follow_up_date": (timezone.localdate() - timedelta(days=1)).isoformat()},
+            {
+                "note": "Called the shop today.",
+                "next_follow_up_date": (timezone.localdate() - timedelta(days=1)).isoformat(),
+            },
             format="json",
         )
         self.assertEqual(response.status_code, 400)
@@ -189,9 +196,7 @@ class CustomerAPITests(TestCase):
     def test_accounts_role_is_read_only(self):
         self.client.force_authenticate(self.accounts)
         self.assertEqual(self.client.get("/api/customers/").status_code, 200)
-        self.assertEqual(
-            self.client.post("/api/customers/", self._payload(), format="json").status_code, 403
-        )
+        self.assertEqual(self.client.post("/api/customers/", self._payload(), format="json").status_code, 403)
 
     def test_stats_endpoint(self):
         response = self.client.get("/api/customers/stats/")
