@@ -54,10 +54,10 @@ jobs:
         working-directory: backend
         run: ruff check . --output-format=github
 
+      # Blocking: the codebase is ruff-formatted. Run `ruff format .` locally to fix.
       - name: ruff format --check
         working-directory: backend
         run: ruff format --check .
-        continue-on-error: true
 
   # -------------------------------------------------------------------------
   backend-tests:
@@ -243,8 +243,10 @@ jobs:
       contents: read
 
     steps:
+      # Keep the major version matched to upload-artifact above: artifacts
+      # written by v4 are read by v4.
       - name: Download test results
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v4
         with:
           name: test-results
           path: artifacts

@@ -130,9 +130,7 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     """Username *or* e-mail plus password -> JWT pair."""
 
-    username = serializers.CharField(
-        help_text=_("Username or e-mail address."), trim_whitespace=True
-    )
+    username = serializers.CharField(help_text=_("Username or e-mail address."), trim_whitespace=True)
     password = serializers.CharField(write_only=True, style={"input_type": "password"})
 
     default_error_messages = {
@@ -142,15 +140,14 @@ class LoginSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         request = self.context.get("request")
-        user = authenticate(
-            request=request, username=attrs["username"], password=attrs["password"]
-        )
+        user = authenticate(request=request, username=attrs["username"], password=attrs["password"])
         if user is None:
             # Distinguish "wrong password" from "deactivated account" without
             # leaking which usernames exist.
-            candidate = User.objects.filter(
-                username__iexact=attrs["username"]
-            ).first() or User.objects.filter(email__iexact=attrs["username"]).first()
+            candidate = (
+                User.objects.filter(username__iexact=attrs["username"]).first()
+                or User.objects.filter(email__iexact=attrs["username"]).first()
+            )
             if candidate is not None and not candidate.is_active:
                 self.fail("inactive")
             self.fail("invalid_credentials")

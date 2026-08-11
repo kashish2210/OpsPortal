@@ -103,11 +103,7 @@ class ProductViewSet(AuditedModelMixin, viewsets.ModelViewSet):
         term = request.query_params.get("q", "").strip()
         qs = Product.objects.active()
         if term:
-            qs = qs.filter(
-                Q(name__icontains=term)
-                | Q(sku__icontains=term)
-                | Q(category__icontains=term)
-            )
+            qs = qs.filter(Q(name__icontains=term) | Q(sku__icontains=term) | Q(category__icontains=term))
         if request.query_params.get("in_stock") == "true":
             qs = qs.filter(current_stock__gt=0)
         serializer = ProductOptionSerializer(qs.order_by("name")[:50], many=True)
@@ -233,7 +229,10 @@ class ProductViewSet(AuditedModelMixin, viewsets.ModelViewSet):
         aggregates = base.filter(is_active=True).aggregate(
             total_stock_units=Coalesce(Sum("current_stock"), 0),
             stock_value=Coalesce(
-                Sum(F("current_stock") * F("unit_price"), output_field=DecimalField(max_digits=18, decimal_places=2)),
+                Sum(
+                    F("current_stock") * F("unit_price"),
+                    output_field=DecimalField(max_digits=18, decimal_places=2),
+                ),
                 Decimal("0.00"),
                 output_field=DecimalField(max_digits=18, decimal_places=2),
             ),

@@ -151,9 +151,7 @@ class CustomerSerializer(serializers.ModelSerializer):
             )
 
         status_value = attrs.get("status", getattr(self.instance, "status", CustomerStatus.LEAD))
-        follow_up = attrs.get(
-            "follow_up_date", getattr(self.instance, "follow_up_date", None)
-        )
+        follow_up = attrs.get("follow_up_date", getattr(self.instance, "follow_up_date", None))
         if status_value == CustomerStatus.LEAD and follow_up is None and self.instance is None:
             # Leads without a next action tend to be forgotten - nudge the user.
             raise serializers.ValidationError(
@@ -185,7 +183,7 @@ class CustomerStatsSerializer(serializers.Serializer):
 
 
 CHOICES_PAYLOAD = {
-    "customer_type": [{"value": v, "label": str(l)} for v, l in CustomerType.choices],
-    "status": [{"value": v, "label": str(l)} for v, l in CustomerStatus.choices],
-    "follow_up_channel": [{"value": v, "label": str(l)} for v, l in FollowUpChannel.choices],
+    "customer_type": [{"value": value, "label": str(label)} for value, label in CustomerType.choices],
+    "status": [{"value": value, "label": str(label)} for value, label in CustomerStatus.choices],
+    "follow_up_channel": [{"value": value, "label": str(label)} for value, label in FollowUpChannel.choices],
 }

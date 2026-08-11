@@ -99,8 +99,12 @@ class SalesChallanSerializer(serializers.ModelSerializer):
     items = ChallanItemSerializer(many=True)
     status_display = serializers.CharField(source="get_status_display", read_only=True)
     created_by_name = serializers.CharField(source="created_by.display_name", read_only=True, default=None)
-    confirmed_by_name = serializers.CharField(source="confirmed_by.display_name", read_only=True, default=None)
-    cancelled_by_name = serializers.CharField(source="cancelled_by.display_name", read_only=True, default=None)
+    confirmed_by_name = serializers.CharField(
+        source="confirmed_by.display_name", read_only=True, default=None
+    )
+    cancelled_by_name = serializers.CharField(
+        source="cancelled_by.display_name", read_only=True, default=None
+    )
     is_editable = serializers.BooleanField(read_only=True)
     can_confirm = serializers.BooleanField(read_only=True)
     can_cancel = serializers.BooleanField(read_only=True)
@@ -277,5 +281,5 @@ class SalesStatsSerializer(serializers.Serializer):
 
 
 CHOICES_PAYLOAD = {
-    "status": [{"value": v, "label": str(l)} for v, l in ChallanStatus.choices],
+    "status": [{"value": value, "label": str(label)} for value, label in ChallanStatus.choices],
 }

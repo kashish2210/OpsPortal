@@ -29,7 +29,9 @@ from .serializers import (
         tags=["Customers"],
         summary="List customers",
         parameters=[
-            OpenApiParameter("q", str, description="Search name, business, mobile, e-mail, code, GST or city."),
+            OpenApiParameter(
+                "q", str, description="Search name, business, mobile, e-mail, code, GST or city."
+            ),
             OpenApiParameter("status", str, description="LEAD | ACTIVE | INACTIVE (repeatable)."),
             OpenApiParameter("customer_type", str, description="RETAIL | WHOLESALE | DISTRIBUTOR."),
             OpenApiParameter("follow_up", str, description="due | upcoming | none."),
@@ -152,9 +154,7 @@ class CustomerViewSet(AuditedModelMixin, viewsets.ModelViewSet):
             "leads": base.filter(status=CustomerStatus.LEAD).count(),
             "active": base.filter(status=CustomerStatus.ACTIVE).count(),
             "inactive": base.filter(status=CustomerStatus.INACTIVE).count(),
-            "follow_ups_due": base.filter(
-                follow_up_date__isnull=False, follow_up_date__lte=today
-            )
+            "follow_ups_due": base.filter(follow_up_date__isnull=False, follow_up_date__lte=today)
             .exclude(status=CustomerStatus.INACTIVE)
             .count(),
             "by_type": {t.value: by_type.get(t.value, 0) for t in CustomerType},

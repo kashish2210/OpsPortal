@@ -63,8 +63,7 @@ class AmountInWordsTests(TestCase):
     def test_large_mixed_amount(self):
         self.assertEqual(
             _amount_in_words(Decimal("1234567.89")),
-            "Rupees Twelve Lakh Thirty Four Thousand Five Hundred Sixty Seven "
-            "and Eighty Nine Paise only",
+            "Rupees Twelve Lakh Thirty Four Thousand Five Hundred Sixty Seven and Eighty Nine Paise only",
         )
 
 

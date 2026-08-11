@@ -82,9 +82,7 @@ class ProductImageUploadTests(TestCase):
             {"image": make_image_upload()},
             format="multipart",
         )
-        row = next(
-            r for r in self.client.get("/api/products/").data["results"] if r["id"] == self.product.pk
-        )
+        row = next(r for r in self.client.get("/api/products/").data["results"] if r["id"] == self.product.pk)
         self.assertIsNotNone(row["image_url"])
 
     def test_replacing_an_image_removes_the_previous_file(self):
@@ -125,9 +123,7 @@ class ProductImageUploadTests(TestCase):
 
     def test_deleting_when_there_is_no_image_is_a_no_op(self):
         self.client.force_authenticate(self.warehouse)
-        self.assertEqual(
-            self.client.delete(f"/api/products/{self.product.pk}/image/").status_code, 200
-        )
+        self.assertEqual(self.client.delete(f"/api/products/{self.product.pk}/image/").status_code, 200)
 
     def test_oversized_image_is_rejected(self):
         self.client.force_authenticate(self.warehouse)

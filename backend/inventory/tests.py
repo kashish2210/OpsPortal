@@ -65,9 +65,7 @@ class StockServiceTests(TestCase):
 
     def test_stock_out_decreases_balance(self):
         product = make_product(stock=40)
-        services.apply_movement(
-            product=product, quantity=15, movement_type=MovementType.OUT, user=self.user
-        )
+        services.apply_movement(product=product, quantity=15, movement_type=MovementType.OUT, user=self.user)
         product.refresh_from_db()
         self.assertEqual(product.current_stock, 25)
 

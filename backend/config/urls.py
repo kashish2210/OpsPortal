@@ -1,11 +1,11 @@
 """Root URL configuration.
 
-    /                     -> redirect to the Django login page
-    /accounts/...         -> server-rendered auth pages (hand-drawn theme)
-    /admin/               -> Django admin
-    /api/                 -> REST API consumed by the React SPA
-    /api/docs/            -> Swagger UI  (schema at /api/schema/)
-    /api/redoc/           -> ReDoc
+/                     -> redirect to the Django login page
+/accounts/...         -> server-rendered auth pages (hand-drawn theme)
+/admin/               -> Django admin
+/api/                 -> REST API consumed by the React SPA
+/api/docs/            -> Swagger UI  (schema at /api/schema/)
+/api/redoc/           -> ReDoc
 """
 
 from django.conf import settings
