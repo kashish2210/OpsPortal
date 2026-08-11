@@ -1,0 +1,19 @@
+{% extends "registration/base_auth.html" %}
+
+{% block title %}{{ SITE_NAME }} - Sign-up closed{% endblock %}
+
+{% block inner_content %}
+<div class="login-box card" style="margin: 0 auto;">
+    <h2>Sign-up closed</h2>
+
+    <p>Self-service registration is currently switched off for this portal.</p>
+    <p class="muted" style="margin-top: 10px;">
+        Ask an administrator to create an account for you from the Users screen.
+    </p>
+
+    <hr class="hr-sketch">
+    <div class="form-footer">
+        <a href="{% url 'accounts:login' %}" class="btn">Back to login</a>
+    </div>
+</div>
+{% endblock %}

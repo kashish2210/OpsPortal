@@ -1,0 +1,38 @@
+# ---------------------------------------------------------------------------
+# Ruff - linting and formatting. Run with `ruff check .` / `ruff format .`
+# ---------------------------------------------------------------------------
+
+line-length = 110
+target-version = "py312"
+
+exclude = [
+    "migrations",
+    ".venv",
+    "venv",
+    "staticfiles",
+    "media",
+]
+
+[lint]
+select = [
+    "E",    # pycodestyle errors
+    "F",    # pyflakes
+    "I",    # import sorting
+    "B",    # bugbear
+    "UP",   # pyupgrade
+    "DJ",   # Django-specific checks
+    "C4",   # comprehensions
+]
+ignore = [
+    "E501",   # line length is handled by the formatter
+    "B008",   # function call in argument default (common in DRF/Django)
+    "DJ001",  # null=True on CharField - deliberate on optional FK-ish fields
+]
+
+[lint.per-file-ignores]
+"*/tests.py" = ["E501"]
+"*/tests_*.py" = ["E501"]
+"config/settings.py" = ["F405", "E402"]
+
+[lint.isort]
+known-first-party = ["accounts", "core", "crm", "inventory", "sales", "config"]

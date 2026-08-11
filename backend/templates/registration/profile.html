@@ -1,0 +1,98 @@
+{% extends "registration/base_auth.html" %}
+
+{% block title %}{{ SITE_NAME }} - My profile{% endblock %}
+
+{% block inner_content %}
+<div class="card" style="margin: 0 auto; max-width: 760px;">
+    <h2 style="text-align: center;">Signed in as {{ user.display_name }}</h2>
+
+    <div class="panel" style="text-align: center;">
+        <div class="image-preview-wrapper" id="avatar-trigger" style="cursor: pointer; border-radius: 50%;">
+            <img id="avatar-preview"
+                 src="{% if user.avatar %}{{ user.avatar.url }}{% else %}#{% endif %}"
+                 class="preview-img"
+                 style="{% if not user.avatar %}display: none;{% endif %}" alt="">
+            <div id="avatar-placeholder" class="placeholder-icon" {% if user.avatar %}style="display: none;"{% endif %}>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+            </div>
+        </div>
+        <small class="muted">Click the circle to change your picture</small>
+
+        <div class="chip-row" style="justify-content: center; margin-top: 14px;">
+            <span class="role-pill">{{ user.get_role_display }}</span>
+            {% if user.is_email_verified %}
+                <span class="badge badge-ok">E-mail verified</span>
+            {% else %}
+                <span class="badge badge-warn">E-mail unverified</span>
+            {% endif %}
+            {% if user.is_superuser %}<span class="badge badge-accent">Superuser</span>{% endif %}
+        </div>
+    </div>
+
+    <div class="panel">
+        <table class="credential-table">
+            <tr><td class="muted">Username</td><td><strong>{{ user.username }}</strong></td></tr>
+            <tr><td class="muted">E-mail</td><td>{{ user.email }} &middot; <a href="{% url 'accounts:email' %}">manage</a></td></tr>
+            <tr><td class="muted">Last login</td><td>{{ user.last_login|date:"d M Y, H:i"|default:"-" }}</td></tr>
+            <tr><td class="muted">Joined</td><td>{{ user.date_joined|date:"d M Y" }}</td></tr>
+        </table>
+    </div>
+
+    <a href="{{ app_url }}" class="btn" style="width: 100%; background-color: var(--accent-color); font-weight: bold; font-size: 1.3rem; padding: 16px;">
+        Open {{ SITE_NAME }} &rarr;
+    </a>
+    <p class="muted" style="text-align: center; margin-top: 8px;">
+        Takes you to the React operations app - your session is exchanged for an API token automatically.
+    </p>
+
+    <hr class="hr-sketch">
+
+    <h3>Edit my details</h3>
+    <form method="POST" action="{% url 'accounts:profile' %}" style="margin-top: 14px;">
+        {% csrf_token %}
+        {% include "partials/non_field_errors.html" %}
+        {{ form.avatar_base64 }}
+
+        <div class="form-grid">
+            {% include "partials/field.html" with field=form.first_name %}
+            {% include "partials/field.html" with field=form.last_name %}
+            {% include "partials/field.html" with field=form.phone %}
+            {% include "partials/field.html" with field=form.department %}
+        </div>
+
+        <button class="btn btn-primary" type="submit" style="width: 100%;">Save changes</button>
+    </form>
+
+    <hr class="hr-sketch">
+
+    <div class="row" style="justify-content: center;">
+        <a href="{% url 'accounts:password_change' %}" class="btn btn-sm">Change password</a>
+        <a href="{% url 'accounts:email' %}" class="btn btn-sm">E-mail settings</a>
+        {% if user.is_staff %}<a href="/admin/" class="btn btn-sm">Django admin</a>{% endif %}
+        <a href="/api/docs/" class="btn btn-sm">API docs</a>
+        <form method="post" action="{% url 'accounts:logout' %}" style="display: inline;">
+            {% csrf_token %}
+            <button class="btn btn-sm" type="submit">Sign out</button>
+        </form>
+    </div>
+</div>
+
+<!-- Cropper modal -->
+<div id="cropperModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card" style="max-width: 600px; text-align: center;">
+        <h3 style="margin-bottom: 20px;">Crop your picture</h3>
+        <div style="max-height: 400px; overflow: hidden; margin-bottom: 20px;">
+            <img id="cropperImage" src="#" style="max-width: 100%;" alt="">
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button type="button" class="btn" id="btnCancelCrop">Cancel</button>
+            <button type="button" class="btn btn-primary" id="btnApplyCrop">Apply</button>
+        </div>
+    </div>
+</div>
+<input type="file" id="avatar-input" accept="image/*" style="display: none;">
+{% endblock %}

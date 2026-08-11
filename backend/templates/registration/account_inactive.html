@@ -1,0 +1,24 @@
+{% extends "registration/base_auth.html" %}
+
+{% block title %}{{ SITE_NAME }} - Account inactive{% endblock %}
+
+{% block inner_content %}
+<div class="login-box card" style="margin: 0 auto;">
+    <h2>Account inactive</h2>
+
+    <div class="alert alert-warning">
+        This account has been deactivated and cannot sign in.
+    </div>
+
+    <p class="muted">
+        Employee accounts are deactivated rather than deleted so that challans,
+        stock movements and follow-ups keep their audit trail. An administrator
+        can reactivate it from the Users screen.
+    </p>
+
+    <hr class="hr-sketch">
+    <div class="form-footer">
+        <a href="{% url 'accounts:login' %}" class="btn">Back to login</a>
+    </div>
+</div>
+{% endblock %}

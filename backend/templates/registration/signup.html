@@ -1,0 +1,89 @@
+{% extends "registration/base_auth.html" %}
+
+{% block title %}{{ SITE_NAME }} - Sign up{% endblock %}
+
+{% block inner_content %}
+<div class="card" style="margin: 0 auto; max-width: 900px; padding: 40px;">
+    <h2 style="text-align: center; margin-bottom: 30px; font-size: 2.5rem;">Join {{ SITE_NAME }}</h2>
+
+    <form id="signupForm" class="signup-form" method="POST" action="{% url 'accounts:signup' %}">
+        {% csrf_token %}
+
+        {% include "partials/non_field_errors.html" %}
+
+        {{ form.avatar_base64 }}
+
+        <div style="display: flex; flex-wrap: wrap; gap: 40px;">
+
+            <!-- Column 1: Account details -->
+            <div style="flex: 1; min-width: 300px;">
+                <h3 style="border-bottom: 2px dashed var(--border-color); padding-bottom: 10px;">Account details</h3>
+
+                {% include "partials/field.html" with field=form.username %}
+                {% include "partials/field.html" with field=form.email %}
+                {% include "partials/field.html" with field=form.password1 %}
+                {% include "partials/field.html" with field=form.password2 %}
+            </div>
+
+            <!-- Column 2: Who you are -->
+            <div style="flex: 1; min-width: 300px;">
+                <h3 style="border-bottom: 2px dashed var(--border-color); padding-bottom: 10px;">About you</h3>
+
+                {% include "partials/field.html" with field=form.first_name %}
+                {% include "partials/field.html" with field=form.last_name %}
+                {% include "partials/field.html" with field=form.phone %}
+                {% include "partials/field.html" with field=form.department %}
+
+                <div style="text-align: center; margin-top: 10px;">
+                    <label>Profile picture</label>
+                    <div class="image-preview-wrapper" id="avatar-trigger"
+                         style="cursor: pointer; border-radius: 50%;">
+                        <img id="avatar-preview" src="#" style="display: none;" class="preview-img" alt="">
+                        <div id="avatar-placeholder" class="placeholder-icon">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </div>
+                    </div>
+                    <small class="muted">Click to upload (optional)</small>
+                    <input type="file" id="avatar-input" accept="image/*" style="display: none;">
+                    {% if form.avatar_base64.errors %}
+                      <ul class="field-error">{% for e in form.avatar_base64.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="panel" style="margin-top: 30px; text-align: left;">
+            <p>New accounts start on the <strong>Sales</strong> role.</p>
+            <p class="muted">An administrator can change it later from the Users screen.</p>
+        </div>
+
+        <div style="text-align: center; margin-top: 30px;">
+            <button type="submit" class="btn btn-primary" style="font-size: 1.5rem; padding: 15px 40px;">
+                Create Account
+            </button>
+            <p style="margin-top: 15px; font-size: 1.1rem;">
+                Already have an account?
+                <a href="{{ login_url }}" style="font-weight: bold;">Login here</a>
+            </p>
+        </div>
+    </form>
+</div>
+
+<!-- Cropper modal -->
+<div id="cropperModal" class="modal-backdrop" style="display: none;">
+    <div class="modal-card" style="max-width: 600px; text-align: center;">
+        <h3 style="margin-bottom: 20px;">Crop your picture</h3>
+        <div style="max-height: 400px; overflow: hidden; margin-bottom: 20px;">
+            <img id="cropperImage" src="#" style="max-width: 100%;" alt="">
+        </div>
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button type="button" class="btn" id="btnCancelCrop">Cancel</button>
+            <button type="button" class="btn btn-primary" id="btnApplyCrop">Apply</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

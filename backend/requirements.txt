@@ -1,0 +1,32 @@
+# ---------------------------------------------------------------------------
+# Fundsroom OpsPortal - backend dependencies
+# Pinned for reproducible builds. Runs on Python 3.12 and 3.13; the Docker
+# image uses python:3.13-slim.
+# ---------------------------------------------------------------------------
+
+Django==5.2.7
+djangorestframework==3.16.1
+djangorestframework-simplejwt==5.5.1
+django-cors-headers==4.9.0
+django-filter==25.2
+django-environ==0.12.0
+drf-spectacular==0.28.0
+
+# Database drivers
+psycopg[binary]==3.2.10
+
+# Static files / WSGI server
+whitenoise==6.11.0
+gunicorn==23.0.0
+
+# Images (product photos, avatars)
+pillow==11.3.0
+
+# PDF generation for challans / invoices.
+# reportlab is pure-Python with no system libraries, so it works in the slim
+# image without apt-installing cairo/pango (which WeasyPrint would need).
+reportlab==4.4.4
+
+# Optional S3 media storage - only used when USE_S3=True.
+django-storages==1.14.6
+boto3==1.40.29

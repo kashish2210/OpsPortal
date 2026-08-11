@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ SITE_NAME }} - Authentication{% endblock %}</title>
+
+    <!-- Handwriting Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Architects+Daughter&family=Patrick+Hand&display=swap" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="{% static 'css/sketch.css' %}">
+
+    <!-- Cropper.js for the avatar picker -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body style="justify-content: center; align-items: center; min-height: 100vh; display: flex;">
+
+    <button id="theme-toggle-btn" class="theme-toggle" aria-label="Toggle theme"
+            style="position: fixed; top: 20px; right: 20px; z-index: 100;"></button>
+
+    <div class="container fade-in" style="width: 100%; max-width: 1000px; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <a href="{% url 'accounts:login' %}"
+               style="font-size: 2.5rem; font-weight: bold; color: var(--text-color); text-decoration: none; font-family: 'Architects Daughter', cursive;">
+                {{ SITE_NAME }}
+            </a>
+            <p class="muted" style="margin-top: 4px;">{{ SITE_TAGLINE }}</p>
+        </div>
+
+        {% include "partials/messages.html" %}
+
+        <div class="login-wrapper" style="min-height: auto;">
+            {% block inner_content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+    <script src="{% static 'js/main.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

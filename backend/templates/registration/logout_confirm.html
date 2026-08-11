@@ -1,0 +1,19 @@
+{% extends "registration/base_auth.html" %}
+
+{% block title %}{{ SITE_NAME }} - Sign out{% endblock %}
+
+{% block inner_content %}
+<div class="login-box card" style="margin: 0 auto;">
+    <h2>{{ SITE_NAME }} &ndash; Sign out</h2>
+
+    <p>Are you sure you want to sign out{% if user.is_authenticated %}, {{ user.display_name }}{% endif %}?</p>
+
+    <form method="POST" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <div style="margin-top: 30px; display: flex; gap: 15px; justify-content: center;">
+            <button class="btn btn-primary" type="submit">Sign out</button>
+            <a href="{% url 'accounts:profile' %}" class="btn">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

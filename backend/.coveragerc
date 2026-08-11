@@ -1,0 +1,42 @@
+; ---------------------------------------------------------------------------
+; Coverage configuration.
+;   coverage run manage.py test && coverage report
+; CI publishes the resulting percentage as a pull-request comment.
+; ---------------------------------------------------------------------------
+
+[run]
+source = .
+branch = True
+omit =
+    */migrations/*
+    */tests.py
+    */tests_*.py
+    */test_*.py
+    manage.py
+    config/wsgi.py
+    config/asgi.py
+    */__init__.py
+    */apps.py
+    .venv/*
+    venv/*
+
+[report]
+precision = 1
+show_missing = True
+skip_covered = False
+sort = Cover
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    def __str__
+    raise AssertionError
+    raise NotImplementedError
+    if TYPE_CHECKING:
+    if __name__ == .__main__.:
+    class Meta:
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml

@@ -1,0 +1,23 @@
+{% extends "registration/base_auth.html" %}
+
+{% block title %}{{ SITE_NAME }} - Verify your e-mail address{% endblock %}
+
+{% block inner_content %}
+<div class="login-box card" style="margin: 0 auto;">
+    <h2>Verify your e-mail address</h2>
+
+    <p>
+        We have sent a verification e-mail
+        {% if pending_email %}to <strong>{{ pending_email }}</strong>{% endif %}.
+        Follow the link inside it to finish setting up your account.
+    </p>
+    <p class="muted" style="margin-top: 10px;">
+        Nothing after a few minutes? Check your spam folder or contact an administrator.
+    </p>
+
+    <hr class="hr-sketch">
+    <div class="form-footer">
+        <a href="{% url 'accounts:login' %}" class="btn">Back to login</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends "registration/base_auth.html" %}
+
+{% block title %}{{ SITE_NAME }} - E-mail address{% endblock %}
+
+{% block inner_content %}
+<div class="login-box card" style="margin: 0 auto; max-width: 560px;">
+    <h2>E-mail address</h2>
+
+    <p>This address is used to sign in and to receive password-reset links.</p>
+
+    <div class="panel" style="margin-top: 20px;">
+        <div class="row" style="justify-content: space-between;">
+            <strong>{{ user.email }}</strong>
+            {% if user.is_email_verified %}
+                <span class="badge badge-ok">Verified</span>
+            {% else %}
+                <span class="badge badge-warn">Unverified</span>
+            {% endif %}
+        </div>
+        {% if user.email_verified_at %}
+            <p class="muted" style="margin-top: 8px;">Confirmed on {{ user.email_verified_at|date:"d M Y, H:i" }}</p>
+        {% endif %}
+
+        {% if not user.is_email_verified %}
+            <form method="POST" action="{% url 'accounts:email' %}" style="margin-top: 14px;">
+                {% csrf_token %}
+                <button class="btn btn-sm" type="submit" name="action_resend">Re-send verification e-mail</button>
+            </form>
+        {% endif %}
+    </div>
+
+    <hr class="hr-sketch">
+    <h3>Change e-mail address</h3>
+
+    <form method="POST" action="{% url 'accounts:email' %}" style="margin-top: 14px;">
+        {% csrf_token %}
+        {% include "partials/non_field_errors.html" %}
+        {% include "partials/field.html" with field=form.email %}
+
+        <p class="muted" style="margin-bottom: 16px;">
+            Changing the address marks it unverified until you confirm the new one.
+        </p>
+
+        <button class="btn btn-primary" type="submit" name="action_change" style="width: 100%;">
+            Update e-mail address
+        </button>
+    </form>
+
+    <hr class="hr-sketch">
+    <div class="form-footer">
+        <a href="{% url 'accounts:profile' %}" class="btn">Back to my profile</a>
+    </div>
+</div>
+{% endblock %}

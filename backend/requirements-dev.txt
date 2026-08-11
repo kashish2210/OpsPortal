@@ -1,0 +1,17 @@
+# ---------------------------------------------------------------------------
+# Development & CI dependencies.
+#   pip install -r requirements.txt -r requirements-dev.txt
+# Kept separate so the production image stays lean.
+# ---------------------------------------------------------------------------
+
+-r requirements.txt
+
+# Coverage measurement (used by CI to comment coverage on pull requests)
+coverage==7.10.7
+
+# Emits JUnit XML from Django's test runner so GitHub Actions can publish a
+# per-test report and annotate failures inline on the pull request.
+unittest-xml-reporting==3.2.0
+
+# Linting / formatting
+ruff==0.13.1

@@ -1,0 +1,11 @@
+Hello {{ user.get_username }},
+
+Welcome to {{ site_name }}. Please confirm your e-mail address by opening
+this link:
+
+{{ confirm_url }}
+
+Once confirmed you can sign in and start using the portal.
+If you did not create this account you can ignore this e-mail.
+
+-- {{ site_name }}

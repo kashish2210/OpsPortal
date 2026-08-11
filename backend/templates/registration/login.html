@@ -1,0 +1,61 @@
+{% extends "registration/base_auth.html" %}
+
+{% block title %}{{ SITE_NAME }} - Login{% endblock %}
+
+{% block inner_content %}
+<div class="login-box card" style="margin: 0 auto;">
+    <h2>{{ SITE_NAME }} &ndash; Login</h2>
+
+    <form class="login-form" method="POST" action="{% url 'accounts:login' %}">
+        {% csrf_token %}
+
+        {% include "partials/non_field_errors.html" %}
+
+        <div class="form-group">
+            <label for="{{ form.username.id_for_label }}">Username or e-mail</label>
+            <input type="text" name="username" id="{{ form.username.id_for_label }}"
+                   value="{{ form.username.value|default_if_none:'' }}"
+                   placeholder="you@company.com or username"
+                   autocomplete="username" autofocus required>
+            {% if form.username.errors %}
+              <ul class="field-error">{% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+
+        <div class="form-group" style="position: relative;">
+            <label for="{{ form.password.id_for_label }}">Password</label>
+            <input type="password" name="password" id="{{ form.password.id_for_label }}"
+                   placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;"
+                   autocomplete="current-password" required>
+            {% if form.password.errors %}
+              <ul class="field-error">{% for e in form.password.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+            {% endif %}
+            <div style="text-align: right; margin-top: 5px;">
+                <a href="{% url 'accounts:password_reset' %}" style="font-size: 0.9rem;">Forgot password</a>
+            </div>
+        </div>
+
+        {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+        <div style="margin-top: 20px;">
+            <button class="btn" type="submit"
+                    style="width: 100%; background-color: var(--accent-color); font-weight: bold;">Login</button>
+        </div>
+
+        <hr class="hr-sketch">
+
+        <div class="form-footer">
+            <p style="text-align: left; margin-bottom: 10px;">New here?</p>
+            <div class="panel" style="padding: 15px; margin-bottom: 15px; text-align: left;">
+                <p>Sign up creates an employee account</p>
+                <p>admin assigns the role afterwards</p>
+            </div>
+            {% if SIGNUP_OPEN %}
+                <a href="{{ signup_url }}" class="btn" style="width: 100%;">Create Account</a>
+            {% else %}
+                <span class="btn" aria-disabled="true" style="width: 100%;">Sign-up is closed</span>
+            {% endif %}
+        </div>
+    </form>
+</div>
+{% endblock %}

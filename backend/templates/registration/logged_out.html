@@ -1,0 +1,16 @@
+{% extends "registration/base_auth.html" %}
+
+{% block title %}{{ SITE_NAME }} - Signed out{% endblock %}
+
+{% block inner_content %}
+<div class="login-box card" style="margin: 0 auto;">
+    <h2>Signed out</h2>
+
+    <p>You have been logged out. Your session on this device is closed.</p>
+
+    <hr class="hr-sketch">
+    <div class="form-footer">
+        <a href="{% url 'accounts:login' %}" class="btn btn-primary" style="width: 100%;">Login again</a>
+    </div>
+</div>
+{% endblock %}
