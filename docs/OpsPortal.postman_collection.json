@@ -1,0 +1,1129 @@
+{
+  "info": {
+    "_postman_id": "a7f3c1e0-5b2d-4d9a-9c31-0f2a6b8e4d10",
+    "name": "OpsPortal — Mini ERP + CRM",
+    "description": "Full API for the OpsPortal case-study project (Django + DRF).\n\n## How to use\n1. Pick the **Local (Docker)** environment or leave `base_url` at its default `http://localhost:8080`.\n2. Run **Auth → Login (admin)**. Its test script stores `access_token`, `refresh_token` and `user_id` as collection variables, and every other request inherits the bearer token.\n3. Run **Seeded lookups → Fetch first customer / product** once — it fills `customer_id` and `product_id` so the challan requests work out of the box.\n\nAll list endpoints are paginated (`count`, `page`, `page_size`, `total_pages`, `next`, `previous`, `results`) and every error uses the envelope `{ success:false, error:{ code, message, details } }`.\n\n### Test logins\n| Role | Username | Password |\n| --- | --- | --- |\n| Admin | admin | Admin@12345 |\n| Sales | sales | Sales@12345 |\n| Warehouse | warehouse | Warehouse@12345 |\n| Accounts | accounts | Accounts@12345 |",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{access_token}}", "type": "string" }]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Nothing global to do; Login stores the token for the rest of the run."
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8080", "type": "string" },
+    { "key": "access_token", "value": "", "type": "string" },
+    { "key": "refresh_token", "value": "", "type": "string" },
+    { "key": "user_id", "value": "", "type": "string" },
+    { "key": "customer_id", "value": "1", "type": "string" },
+    { "key": "product_id", "value": "1", "type": "string" },
+    { "key": "challan_id", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login (admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.test('returns a token pair and the user', () => {",
+                  "  pm.expect(body).to.have.property('access');",
+                  "  pm.expect(body).to.have.property('refresh');",
+                  "  pm.expect(body.user).to.have.property('role');",
+                  "});",
+                  "pm.collectionVariables.set('access_token', body.access);",
+                  "pm.collectionVariables.set('refresh_token', body.refresh);",
+                  "pm.collectionVariables.set('user_id', body.user.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@12345\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/auth/login/", "host": ["{{base_url}}"], "path": ["api", "auth", "login", ""] },
+            "description": "Accepts a username **or** an e-mail address. Returns `{access, refresh, user}`."
+          }
+        },
+        {
+          "name": "Login (sales)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', body.access);",
+                  "pm.collectionVariables.set('refresh_token', body.refresh);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"sales\",\n  \"password\": \"Sales@12345\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/login/", "host": ["{{base_url}}"], "path": ["api", "auth", "login", ""] }
+          }
+        },
+        {
+          "name": "Login (warehouse)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', body.access);",
+                  "pm.collectionVariables.set('refresh_token', body.refresh);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"warehouse\",\n  \"password\": \"Warehouse@12345\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/login/", "host": ["{{base_url}}"], "path": ["api", "auth", "login", ""] }
+          }
+        },
+        {
+          "name": "Login (accounts)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', body.access);",
+                  "pm.collectionVariables.set('refresh_token', body.refresh);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"accounts\",\n  \"password\": \"Accounts@12345\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/login/", "host": ["{{base_url}}"], "path": ["api", "auth", "login", ""] }
+          }
+        },
+        {
+          "name": "Login — wrong password (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('uses the error envelope', () => {",
+                  "  const e = pm.response.json().error;",
+                  "  pm.expect(e).to.have.property('code');",
+                  "  pm.expect(e).to.have.property('message');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"sales\",\n  \"password\": \"definitely-wrong\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/login/", "host": ["{{base_url}}"], "path": ["api", "auth", "login", ""] }
+          }
+        },
+        {
+          "name": "Refresh access token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', body.access);",
+                  "if (body.refresh) pm.collectionVariables.set('refresh_token', body.refresh);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/refresh/", "host": ["{{base_url}}"], "path": ["api", "auth", "refresh", ""] },
+            "description": "Refresh tokens rotate: the old one is blacklisted and a new pair is issued."
+          }
+        },
+        {
+          "name": "Current user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/auth/me/", "host": ["{{base_url}}"], "path": ["api", "auth", "me", ""] }
+          }
+        },
+        {
+          "name": "Update my profile",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"first_name\": \"Riya\",\n  \"last_name\": \"Sharma\",\n  \"phone\": \"9820011223\",\n  \"department\": \"Sales\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/me/", "host": ["{{base_url}}"], "path": ["api", "auth", "me", ""] },
+            "description": "`role` is ignored here on purpose — only an admin can change it."
+          }
+        },
+        {
+          "name": "Change password",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"old_password\": \"Admin@12345\",\n  \"new_password\": \"NewAdmin@12345\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/change-password/", "host": ["{{base_url}}"], "path": ["api", "auth", "change-password", ""] }
+          }
+        },
+        {
+          "name": "Session → JWT handoff",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/auth/session-token/", "host": ["{{base_url}}"], "path": ["api", "auth", "session-token", ""] },
+            "description": "Requires a Django session cookie (sign in first at /accounts/login/ in the same browser/cookie jar). This is what the React app calls after a server-rendered login."
+          }
+        },
+        {
+          "name": "Logout (blacklist refresh)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refresh\": \"{{refresh_token}}\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/logout/", "host": ["{{base_url}}"], "path": ["api", "auth", "logout", ""] },
+            "description": "Returns 205 Reset Content."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Seeded lookups",
+      "item": [
+        {
+          "name": "Fetch first customer → {{customer_id}}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rows = pm.response.json().results || pm.response.json();",
+                  "if (rows.length) pm.collectionVariables.set('customer_id', rows[0].id);",
+                  "pm.test('found a customer', () => pm.expect(rows.length).to.be.above(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/customers/options/", "host": ["{{base_url}}"], "path": ["api", "customers", "options", ""] }
+          }
+        },
+        {
+          "name": "Fetch best-stocked product → {{product_id}}",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const rows = pm.response.json().results;",
+                  "if (rows.length) pm.collectionVariables.set('product_id', rows[0].id);",
+                  "pm.test('found a product in stock', () => pm.expect(rows[0].current_stock).to.be.above(0));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/?ordering=-current_stock&page_size=1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", ""],
+              "query": [
+                { "key": "ordering", "value": "-current_stock" },
+                { "key": "page_size", "value": "1" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Customers (CRM)",
+      "item": [
+        {
+          "name": "List customers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('paginated envelope', () => {",
+                  "  const b = pm.response.json();",
+                  "  ['count','page','page_size','total_pages','results'].forEach(k => pm.expect(b).to.have.property(k));",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers/?page=1&page_size=20&ordering=-created_at",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", ""],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "20" },
+                { "key": "ordering", "value": "-created_at" },
+                { "key": "q", "value": "", "disabled": true },
+                { "key": "status", "value": "LEAD", "disabled": true },
+                { "key": "customer_type", "value": "WHOLESALE", "disabled": true },
+                { "key": "city", "value": "Mumbai", "disabled": true },
+                { "key": "has_gst", "value": "true", "disabled": true },
+                { "key": "follow_up", "value": "due", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Search customers (?q=)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers/?q=Mumbai",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", ""],
+              "query": [{ "key": "q", "value": "Mumbai" }]
+            },
+            "description": "Matches name, business name, mobile, e-mail, code, GST and city."
+          }
+        },
+        {
+          "name": "Follow-ups due",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/customers/?follow_up=due",
+              "host": ["{{base_url}}"],
+              "path": ["api", "customers", ""],
+              "query": [{ "key": "follow_up", "value": "due" }]
+            }
+          }
+        },
+        {
+          "name": "Create customer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test('gets an auto customer code', () => pm.expect(b.code).to.match(/^CUST-\\d{5}$/));",
+                  "pm.collectionVariables.set('customer_id', b.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Test Customer\",\n  \"business_name\": \"Postman Traders\",\n  \"mobile\": \"9700000123\",\n  \"email\": \"postman@example.com\",\n  \"gst_number\": \"27AAPFU0939F1ZV\",\n  \"customer_type\": \"WHOLESALE\",\n  \"status\": \"ACTIVE\",\n  \"address\": \"12 Test Street\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"pincode\": \"400001\",\n  \"credit_limit\": \"50000\",\n  \"notes\": \"Created from the Postman collection.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/customers/", "host": ["{{base_url}}"], "path": ["api", "customers", ""] }
+          }
+        },
+        {
+          "name": "Create customer — wholesale without GST (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('flags gst_number', () => pm.expect(pm.response.json().error.details).to.have.property('gst_number'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"No GST Wholesaler\",\n  \"mobile\": \"9700000999\",\n  \"customer_type\": \"WHOLESALE\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/customers/", "host": ["{{base_url}}"], "path": ["api", "customers", ""] },
+            "description": "Wholesale and distributor customers invoice against a GSTIN, so it is required for them."
+          }
+        },
+        {
+          "name": "Customer detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/customers/{{customer_id}}/", "host": ["{{base_url}}"], "path": ["api", "customers", "{{customer_id}}", ""] },
+            "description": "Includes `recent_follow_ups`, `follow_up_count` and `challan_count`."
+          }
+        },
+        {
+          "name": "Edit customer",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"status\": \"ACTIVE\",\n  \"notes\": \"Updated from Postman.\"\n}" },
+            "url": { "raw": "{{base_url}}/api/customers/{{customer_id}}/", "host": ["{{base_url}}"], "path": ["api", "customers", "{{customer_id}}", ""] }
+          }
+        },
+        {
+          "name": "Add follow-up note",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"note\": \"Called about the monthly requirement. Wants a revised rate card.\",\n  \"channel\": \"CALL\",\n  \"next_follow_up_date\": \"2026-12-31\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/customers/{{customer_id}}/follow-ups/", "host": ["{{base_url}}"], "path": ["api", "customers", "{{customer_id}}", "follow-ups", ""] },
+            "description": "`next_follow_up_date` also becomes the customer's next follow-up date."
+          }
+        },
+        {
+          "name": "List a customer's follow-ups",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/customers/{{customer_id}}/follow-ups/", "host": ["{{base_url}}"], "path": ["api", "customers", "{{customer_id}}", "follow-ups", ""] }
+          }
+        },
+        {
+          "name": "CRM stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/customers/stats/", "host": ["{{base_url}}"], "path": ["api", "customers", "stats", ""] }
+          }
+        },
+        {
+          "name": "Choice lists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/customers/choices/", "host": ["{{base_url}}"], "path": ["api", "customers", "choices", ""] }
+          }
+        },
+        {
+          "name": "Archive customer (marks inactive)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/customers/{{customer_id}}/", "host": ["{{base_url}}"], "path": ["api", "customers", "{{customer_id}}", ""] },
+            "description": "Nothing is hard-deleted — challans reference customers for audit."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Products & inventory",
+      "item": [
+        {
+          "name": "List products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/products/?page=1&page_size=20&ordering=name",
+              "host": ["{{base_url}}"],
+              "path": ["api", "products", ""],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "20" },
+                { "key": "ordering", "value": "name" },
+                { "key": "q", "value": "", "disabled": true },
+                { "key": "category", "value": "Electrical", "disabled": true },
+                { "key": "location", "value": "Warehouse A", "disabled": true },
+                { "key": "stock", "value": "low", "disabled": true },
+                { "key": "is_active", "value": "true", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Low-stock products",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/products/low-stock/", "host": ["{{base_url}}"], "path": ["api", "products", "low-stock", ""] }
+          }
+        },
+        {
+          "name": "Create product (warehouse role)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test('opening stock applied', () => pm.expect(b.current_stock).to.eql(120));",
+                  "pm.collectionVariables.set('product_id', b.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Test Widget\",\n  \"sku\": \"PM-TEST-01\",\n  \"category\": \"Hardware\",\n  \"description\": \"Created from the Postman collection.\",\n  \"unit\": \"PCS\",\n  \"unit_price\": \"249.50\",\n  \"hsn_code\": \"8481\",\n  \"tax_rate\": \"18\",\n  \"opening_stock\": 120,\n  \"min_stock_alert\": 20,\n  \"location\": \"Warehouse B - Bay 1\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/products/", "host": ["{{base_url}}"], "path": ["api", "products", ""] },
+            "description": "Requires the Warehouse or Admin role. `opening_stock` is recorded as an OPENING stock movement."
+          }
+        },
+        {
+          "name": "Product detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/products/{{product_id}}/", "host": ["{{base_url}}"], "path": ["api", "products", "{{product_id}}", ""] }
+          }
+        },
+        {
+          "name": "Edit product",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"unit_price\": \"275.00\",\n  \"min_stock_alert\": 25\n}" },
+            "url": { "raw": "{{base_url}}/api/products/{{product_id}}/", "host": ["{{base_url}}"], "path": ["api", "products", "{{product_id}}", ""] },
+            "description": "`current_stock` is read-only here — stock only moves through the ledger."
+          }
+        },
+        {
+          "name": "Product stock history",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/products/{{product_id}}/movements/", "host": ["{{base_url}}"], "path": ["api", "products", "{{product_id}}", "movements", ""] }
+          }
+        },
+        {
+          "name": "Stock-take correction",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"new_quantity\": 100,\n  \"notes\": \"Monthly physical count.\"\n}" },
+            "url": { "raw": "{{base_url}}/api/products/{{product_id}}/adjust-stock/", "host": ["{{base_url}}"], "path": ["api", "products", "{{product_id}}", "adjust-stock", ""] },
+            "description": "Sets an absolute figure; the difference is logged as an ADJUSTMENT movement."
+          }
+        },
+        {
+          "name": "Categories",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/products/categories/", "host": ["{{base_url}}"], "path": ["api", "products", "categories", ""] }
+          }
+        },
+        {
+          "name": "Locations / warehouses",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/products/locations/", "host": ["{{base_url}}"], "path": ["api", "products", "locations", ""] }
+          }
+        },
+        {
+          "name": "Inventory stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/products/stats/", "host": ["{{base_url}}"], "path": ["api", "products", "stats", ""] }
+          }
+        },
+        {
+          "name": "Archive product",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/products/{{product_id}}/", "host": ["{{base_url}}"], "path": ["api", "products", "{{product_id}}", ""] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Stock movements",
+      "item": [
+        {
+          "name": "Stock movement log",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/stock-movements/?page=1&page_size=20",
+              "host": ["{{base_url}}"],
+              "path": ["api", "stock-movements", ""],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "20" },
+                { "key": "product", "value": "", "disabled": true },
+                { "key": "sku", "value": "EL-LED-18", "disabled": true },
+                { "key": "movement_type", "value": "OUT", "disabled": true },
+                { "key": "reason", "value": "SALE", "disabled": true },
+                { "key": "reference", "value": "CH-", "disabled": true },
+                { "key": "created_after", "value": "2026-08-01", "disabled": true },
+                { "key": "created_before", "value": "2026-08-31", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Stock IN (warehouse role)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "pm.test('records the resulting balance', () => pm.expect(pm.response.json()).to.have.property('balance_after'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product\": {{product_id}},\n  \"movement_type\": \"IN\",\n  \"quantity\": 50,\n  \"reason\": \"PURCHASE\",\n  \"reference\": \"PO-2026-0099\",\n  \"notes\": \"Goods received against the purchase order.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/stock-movements/", "host": ["{{base_url}}"], "path": ["api", "stock-movements", ""] }
+          }
+        },
+        {
+          "name": "Stock OUT",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product\": {{product_id}},\n  \"movement_type\": \"OUT\",\n  \"quantity\": 5,\n  \"reason\": \"DAMAGE\",\n  \"notes\": \"Damaged during handling.\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/stock-movements/", "host": ["{{base_url}}"], "path": ["api", "stock-movements", ""] }
+          }
+        },
+        {
+          "name": "Stock OUT beyond available (400 insufficient_stock)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "const e = pm.response.json().error;",
+                  "pm.test('code is insufficient_stock', () => pm.expect(e.code).to.eql('insufficient_stock'));",
+                  "pm.test('lists the shortage', () => {",
+                  "  const s = e.details.shortages[0];",
+                  "  pm.expect(s).to.have.all.keys('product_id','sku','product_name','requested','available','short_by');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product\": {{product_id}},\n  \"movement_type\": \"OUT\",\n  \"quantity\": 999999,\n  \"reason\": \"ADJUSTMENT\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/stock-movements/", "host": ["{{base_url}}"], "path": ["api", "stock-movements", ""] },
+            "description": "Stock can never go negative. Nothing is written."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sales challans",
+      "item": [
+        {
+          "name": "List challans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/challans/?page=1&page_size=20&ordering=-challan_date",
+              "host": ["{{base_url}}"],
+              "path": ["api", "challans", ""],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "page_size", "value": "20" },
+                { "key": "ordering", "value": "-challan_date" },
+                { "key": "q", "value": "", "disabled": true },
+                { "key": "status", "value": "DRAFT", "disabled": true },
+                { "key": "customer", "value": "", "disabled": true },
+                { "key": "date_from", "value": "2026-08-01", "disabled": true },
+                { "key": "date_to", "value": "2026-08-31", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create DRAFT challan",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201 Created', () => pm.response.to.have.status(201));",
+                  "const b = pm.response.json();",
+                  "pm.test('status is DRAFT', () => pm.expect(b.status).to.eql('DRAFT'));",
+                  "pm.test('challan number auto-generated', () => pm.expect(b.challan_number).to.match(/^CH-\\d{6}-\\d{5}$/));",
+                  "pm.test('lines carry a product snapshot', () => {",
+                  "  pm.expect(b.items[0]).to.include.keys('product_sku','product_name','unit_price');",
+                  "});",
+                  "pm.collectionVariables.set('challan_id', b.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {{customer_id}},\n  \"challan_date\": \"2026-08-10\",\n  \"notes\": \"Deliver before 6 pm.\",\n  \"vehicle_number\": \"MH-01-AB-1234\",\n  \"confirm\": false,\n  \"items\": [\n    { \"product\": {{product_id}}, \"quantity\": 5 }\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/challans/", "host": ["{{base_url}}"], "path": ["api", "challans", ""] },
+            "description": "A draft reserves nothing — stock is untouched until it is confirmed."
+          }
+        },
+        {
+          "name": "Challan detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/challans/{{challan_id}}/", "host": ["{{base_url}}"], "path": ["api", "challans", "{{challan_id}}", ""] }
+          }
+        },
+        {
+          "name": "Edit draft (replaces the lines)",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Quantities revised by the customer.\",\n  \"items\": [\n    { \"product\": {{product_id}}, \"quantity\": 8 }\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/challans/{{challan_id}}/", "host": ["{{base_url}}"], "path": ["api", "challans", "{{challan_id}}", ""] }
+          }
+        },
+        {
+          "name": "Confirm challan (deducts stock)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "const b = pm.response.json();",
+                  "pm.test('status is CONFIRMED', () => pm.expect(b.status).to.eql('CONFIRMED'));",
+                  "pm.test('audit trail recorded', () => pm.expect(b.confirmed_at).to.not.be.null);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/challans/{{challan_id}}/confirm/", "host": ["{{base_url}}"], "path": ["api", "challans", "{{challan_id}}", "confirm", ""] },
+            "description": "Locks the products, verifies stock, writes OUT movements and reduces the balances — all in one transaction."
+          }
+        },
+        {
+          "name": "Stock movements from this challan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/challans/{{challan_id}}/stock-movements/", "host": ["{{base_url}}"], "path": ["api", "challans", "{{challan_id}}", "stock-movements", ""] }
+          }
+        },
+        {
+          "name": "Edit a confirmed challan (400 — immutable)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": ["pm.test('400 Bad Request', () => pm.response.to.have.status(400));"]
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"notes\": \"Trying to edit a confirmed document.\"\n}" },
+            "url": { "raw": "{{base_url}}/api/challans/{{challan_id}}/", "host": ["{{base_url}}"], "path": ["api", "challans", "{{challan_id}}", ""] }
+          }
+        },
+        {
+          "name": "Confirm twice (400 already_confirmed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "pm.test('code is already_confirmed', () => pm.expect(pm.response.json().error.code).to.eql('already_confirmed'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/challans/{{challan_id}}/confirm/", "host": ["{{base_url}}"], "path": ["api", "challans", "{{challan_id}}", "confirm", ""] }
+          }
+        },
+        {
+          "name": "Cancel challan (restores stock)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('status is CANCELLED', () => pm.expect(pm.response.json().status).to.eql('CANCELLED'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Customer cancelled before delivery.\"\n}" },
+            "url": { "raw": "{{base_url}}/api/challans/{{challan_id}}/cancel/", "host": ["{{base_url}}"], "path": ["api", "challans", "{{challan_id}}", "cancel", ""] },
+            "description": "A confirmed challan writes compensating IN movements (reason CHALLAN_CANCELLED); a draft just closes."
+          }
+        },
+        {
+          "name": "Save & confirm in one request",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {{customer_id}},\n  \"confirm\": true,\n  \"items\": [\n    { \"product\": {{product_id}}, \"quantity\": 2 }\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/challans/", "host": ["{{base_url}}"], "path": ["api", "challans", ""] }
+          }
+        },
+        {
+          "name": "Save & confirm — insufficient stock (400, nothing written)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('400 Bad Request', () => pm.response.to.have.status(400));",
+                  "const e = pm.response.json().error;",
+                  "pm.test('code is insufficient_stock', () => pm.expect(e.code).to.eql('insufficient_stock'));",
+                  "pm.test('every short line is reported', () => pm.expect(e.details.shortages).to.be.an('array').that.is.not.empty);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {{customer_id}},\n  \"confirm\": true,\n  \"items\": [\n    { \"product\": {{product_id}}, \"quantity\": 999999 }\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/challans/", "host": ["{{base_url}}"], "path": ["api", "challans", ""] },
+            "description": "All or nothing: no orphan draft is left behind and no stock moves."
+          }
+        },
+        {
+          "name": "Duplicate product line (400)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customer\": {{customer_id}},\n  \"items\": [\n    { \"product\": {{product_id}}, \"quantity\": 1 },\n    { \"product\": {{product_id}}, \"quantity\": 2 }\n  ]\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/challans/", "host": ["{{base_url}}"], "path": ["api", "challans", ""] }
+          }
+        },
+        {
+          "name": "Sales stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/challans/stats/", "host": ["{{base_url}}"], "path": ["api", "challans", "stats", ""] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users & roles (admin only)",
+      "item": [
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/users/",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", ""],
+              "query": [
+                { "key": "role", "value": "SALES", "disabled": true },
+                { "key": "is_active", "value": "true", "disabled": true },
+                { "key": "q", "value": "", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Available roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/users/roles/", "host": ["{{base_url}}"], "path": ["api", "users", "roles", ""] }
+          }
+        },
+        {
+          "name": "Create user",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"postman.user\",\n  \"email\": \"postman.user@opsportal.local\",\n  \"first_name\": \"Postman\",\n  \"last_name\": \"User\",\n  \"role\": \"WAREHOUSE\",\n  \"department\": \"Warehouse\",\n  \"password\": \"Str0ng!passw0rd\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/api/users/", "host": ["{{base_url}}"], "path": ["api", "users", ""] }
+          }
+        },
+        {
+          "name": "Change a user's role",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"role\": \"ACCOUNTS\"\n}" },
+            "url": { "raw": "{{base_url}}/api/users/2/", "host": ["{{base_url}}"], "path": ["api", "users", "2", ""] }
+          }
+        },
+        {
+          "name": "Deactivate user",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/users/2/deactivate/", "host": ["{{base_url}}"], "path": ["api", "users", "2", "deactivate", ""] }
+          }
+        },
+        {
+          "name": "Reactivate user",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/users/2/activate/", "host": ["{{base_url}}"], "path": ["api", "users", "2", "activate", ""] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard & health",
+      "item": [
+        {
+          "name": "Dashboard summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/dashboard/", "host": ["{{base_url}}"], "path": ["api", "dashboard", ""] },
+            "description": "KPI counters plus the five most relevant rows per module, in one round-trip."
+          }
+        },
+        {
+          "name": "Health check (public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 OK', () => pm.response.to.have.status(200));",
+                  "pm.test('database reachable', () => pm.expect(pm.response.json().database).to.eql('ok'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/health/", "host": ["{{base_url}}"], "path": ["api", "health", ""] }
+          }
+        },
+        {
+          "name": "OpenAPI schema",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/schema/?format=json", "host": ["{{base_url}}"], "path": ["api", "schema", ""], "query": [{ "key": "format", "value": "json" }] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Role enforcement (expect 403)",
+      "item": [
+        {
+          "name": "1. Login as warehouse",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const b = pm.response.json();",
+                  "pm.collectionVariables.set('access_token', b.access);",
+                  "pm.collectionVariables.set('refresh_token', b.refresh);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"warehouse\",\n  \"password\": \"Warehouse@12345\"\n}" },
+            "url": { "raw": "{{base_url}}/api/auth/login/", "host": ["{{base_url}}"], "path": ["api", "auth", "login", ""] }
+          }
+        },
+        {
+          "name": "2. Warehouse creates a challan → 403",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('403 Forbidden', () => pm.response.to.have.status(403));"] }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"customer\": {{customer_id}},\n  \"items\": [{ \"product\": {{product_id}}, \"quantity\": 1 }]\n}" },
+            "url": { "raw": "{{base_url}}/api/challans/", "host": ["{{base_url}}"], "path": ["api", "challans", ""] }
+          }
+        },
+        {
+          "name": "3. Warehouse reads challans → 200",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('200 OK', () => pm.response.to.have.status(200));"] }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/challans/", "host": ["{{base_url}}"], "path": ["api", "challans", ""] }
+          }
+        },
+        {
+          "name": "4. Warehouse lists users → 403 (admin only)",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('403 Forbidden', () => pm.response.to.have.status(403));"] }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/users/", "host": ["{{base_url}}"], "path": ["api", "users", ""] }
+          }
+        },
+        {
+          "name": "5. No token → 401",
+          "event": [
+            {
+              "listen": "test",
+              "script": { "type": "text/javascript", "exec": ["pm.test('401 Unauthorized', () => pm.response.to.have.status(401));"] }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{base_url}}/api/customers/", "host": ["{{base_url}}"], "path": ["api", "customers", ""] }
+          }
+        }
+      ]
+    }
+  ]
+}

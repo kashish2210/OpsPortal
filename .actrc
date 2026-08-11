@@ -1,0 +1,21 @@
+# ---------------------------------------------------------------------------
+# Default flags for `act` (https://github.com/nektos/act).
+# act reads this file automatically, so plain `act pull_request` just works.
+# ---------------------------------------------------------------------------
+
+# Runner image. `medium` (~500 MB) carries python, node, docker CLI and the
+# common tooling these workflows need. `-full` is ~17 GB and rarely worth it.
+-P ubuntu-latest=catthehacker/ubuntu:act-latest
+
+# Apple Silicon / ARM hosts: uncomment so the x86 runner image works.
+# --container-architecture linux/amd64
+
+# Reuse containers between runs - much faster on repeat runs, at the cost of
+# a slightly less clean environment.
+--reuse
+
+# Local secrets. Copy .github/act.secrets.example to .secrets first.
+--secret-file .secrets
+
+# Quieter output; drop this when debugging a workflow.
+--container-options "--memory=4g"

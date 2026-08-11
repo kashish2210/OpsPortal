@@ -1,0 +1,128 @@
+# ---------------------------------------------------------------------------
+# OpsPortal - the whole stack in one command:
+#
+#     docker compose up --build
+#
+#   http://localhost:8080            React operations app
+#   http://localhost:8080/accounts/  Django-rendered auth pages
+#   http://localhost:8080/admin/     Django admin
+#   http://localhost:8080/api/docs/  Swagger UI
+#   http://localhost:8025            Mailpit inbox (every outgoing e-mail)
+#
+# Everything is served through nginx on one origin, so cookies, CSRF and the
+# session -> JWT handoff behave exactly as they would in production.
+# ---------------------------------------------------------------------------
+
+name: opsportal
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: opsportal-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-opsportal}
+      POSTGRES_USER: ${POSTGRES_USER:-opsportal}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-opsportal}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-opsportal} -d ${POSTGRES_DB:-opsportal}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    # Exposed only so you can inspect the database with a local client.
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+
+  # Real SMTP server for development: Django delivers to it over SMTP and every
+  # message lands in a searchable web inbox, so password-reset and e-mail
+  # verification can be walked through end to end without a mail provider.
+  mailpit:
+    image: axllent/mailpit:v1.21
+    container_name: opsportal-mailpit
+    restart: unless-stopped
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+      MP_MAX_MESSAGES: 500
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"   # web inbox
+      - "${MAILPIT_SMTP_PORT:-1025}:1025" # SMTP
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: opsportal-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      mailpit:
+        condition: service_started
+    environment:
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:-dev-only-secret-change-me-0123456789abcdef}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,backend,frontend}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      DATABASE_URL: postgres://${POSTGRES_USER:-opsportal}:${POSTGRES_PASSWORD:-opsportal}@db:5432/${POSTGRES_DB:-opsportal}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8080}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080,http://localhost:5173}
+      TIME_ZONE: ${TIME_ZONE:-Asia/Kolkata}
+      SIGNUP_OPEN: ${SIGNUP_OPEN:-True}
+      REQUIRE_EMAIL_VERIFICATION: ${REQUIRE_EMAIL_VERIFICATION:-False}
+      # Real SMTP against Mailpit. Swap EMAIL_HOST/PORT/USER/PASSWORD for a
+      # provider (SendGrid, Brevo, SES, Gmail) and set EMAIL_USE_TLS=True.
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
+      EMAIL_HOST: ${EMAIL_HOST:-mailpit}
+      EMAIL_PORT: ${EMAIL_PORT:-1025}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER:-}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD:-}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-False}
+      EMAIL_USE_SSL: ${EMAIL_USE_SSL:-False}
+      DEFAULT_FROM_EMAIL: ${DEFAULT_FROM_EMAIL:-OpsPortal <no-reply@opsportal.local>}
+      # S3 media storage (bonus) - off by default, uses the local volume.
+      USE_S3: ${USE_S3:-False}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
+      AWS_STORAGE_BUCKET_NAME: ${AWS_STORAGE_BUCKET_NAME:-}
+      AWS_S3_REGION_NAME: ${AWS_S3_REGION_NAME:-ap-south-1}
+      AWS_S3_CUSTOM_DOMAIN: ${AWS_S3_CUSTOM_DOMAIN:-}
+      AWS_S3_ENDPOINT_URL: ${AWS_S3_ENDPOINT_URL:-}
+      ACCESS_TOKEN_LIFETIME_MINUTES: ${ACCESS_TOKEN_LIFETIME_MINUTES:-60}
+      REFRESH_TOKEN_LIFETIME_DAYS: ${REFRESH_TOKEN_LIFETIME_DAYS:-7}
+      SEED_DEMO_DATA: ${SEED_DEMO_DATA:-True}
+      SECURE_SSL_REDIRECT: ${SECURE_SSL_REDIRECT:-False}
+    volumes:
+      - static_files:/app/staticfiles
+      - media_files:/app/media
+    # Exposed so you can hit the API directly (Postman) without going via nginx.
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: opsportal-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - media_files:/usr/share/nginx/media:ro
+    ports:
+      - "${APP_PORT:-8080}:80"
+
+volumes:
+  postgres_data:
+  static_files:
+  media_files:
