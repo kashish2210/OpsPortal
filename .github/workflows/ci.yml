@@ -285,7 +285,7 @@ jobs:
       # One comment that gets edited in place on every push, rather than a new
       # comment each time.
       - name: Comment the CI summary
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: opsportal-ci-summary
           message: |
