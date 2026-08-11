@@ -41,7 +41,7 @@ jobs:
     name: Lint (ruff)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-python@v6
         with:
@@ -74,7 +74,7 @@ jobs:
       TEST_OUTPUT_DIR: test-results
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # act 0.2.89 crashes while managing service containers, so we start the
       # Postgres test database explicitly. GitHub Actions still runs the same
@@ -174,7 +174,7 @@ jobs:
     name: Frontend (typecheck + build)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - uses: actions/setup-node@v5
         with:
@@ -220,7 +220,7 @@ jobs:
     name: Docker images build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       # Plain `docker compose build` rather than buildx, so this job behaves
       # identically under act and validates exactly what a developer runs.
